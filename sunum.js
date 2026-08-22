@@ -215,6 +215,10 @@ function openTopic(id, fromEl) {
   /* the simulator page gets a one-line, lighter title so the tool itself fits
      the first screen */
   topic.classList.toggle("compact", id === "verim");
+  /* the simulator's full-bleed mode belongs to that page only — it must not
+     leak into the next topic (it hid the title and pushed the cards to the
+     window edges on the ROI page) */
+  topic.classList.remove("sim-full");
   $("#s-topic-kick").textContent = tile.d;
   $("#s-topic-title").textContent = tile.t;
   var body = $("#s-topic-body");
@@ -227,6 +231,7 @@ function goHome() {
   stopMap();
   if (simObserver) { try { simObserver.disconnect(); } catch (e) {} simObserver = null; }
   $("#s-topic").hidden = true;
+  $("#s-topic").classList.remove("sim-full");
   $("#s-board").hidden = false;
   renderBoard();
   window.scrollTo(0, 0);
