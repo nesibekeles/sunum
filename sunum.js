@@ -360,9 +360,16 @@ PAGES.ortaklik = function (el) {
    only its header. The frame fills the viewport below the deck's compact
    title, so the deck page itself has nothing to scroll: the one scrollbar on
    screen is the simulator's own. */
+/* Exactly one scrollbar, the simulator's own `.snap`. The iframe DOCUMENT must
+   never scroll: #page1 was 100vh plus padding (so it overflowed by its own
+   padding) and page 2 adds a footer under the snap container — both pushed a
+   second scrollbar onto the screen. */
 var SIM_CSS =
   "header{display:none!important}:root{--hdr:0px!important}" +
-  "html,body{background:transparent!important}";
+  "html,body{background:transparent!important;overflow:hidden!important;height:100%!important}" +
+  "#page1{min-height:0!important;height:100vh!important;box-sizing:border-box!important;" +
+  "overflow:auto!important;align-items:safe center!important;padding:14px 16px 18px!important}" +
+  "#foot{display:none!important}";
 
 PAGES.verim = function (el) {
   el.innerHTML = '<iframe class="simframe native" id="sim-frame" src="' +
