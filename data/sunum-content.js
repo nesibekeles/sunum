@@ -80,8 +80,12 @@ window.SUNUM = {
                 "Değil. Profilinizden Instagram'ınıza geçen her çift, sizin takipçiniz oluyor."],
         move: 0 }
     ],
-    closing: "Instagram'ınızı kapatmanızı istemiyoruz. Sizi arayan çiftin ilk baktığı yerde " +
-      "olmanızı istiyoruz — Instagram'ınız da oradan büyür."
+    closing: "Düğün hazırlığında olan tüm çiftlerin ilk geldiği yer Düğün.com. Mekanınızı " +
+      "önceden duymamış olsa bile bütün çiftlerin karşısına çıkarsınız.",
+    /* the last word goes to the venue's own couples — an invitation, not a claim */
+    askTitle: "En iyi kanıt sizin çiftlerinizde",
+    askText: "Bu hafta görüştüğünüz çiftlere sormaktan çekinmeyin: “Düğün.com'u biliyor musunuz? " +
+      "Mekan ararken baktınız mı?” Cevabı bizim söylememize gerek kalmaz — onlar söyler."
   },
 
   ortaklik: {

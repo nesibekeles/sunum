@@ -315,7 +315,8 @@ PAGES.instagram = function (el) {
         '<div class="exp-reveal" hidden><p class="exp-react"></p>' +
         '<div class="exp-move">' + O.moves[q.move] + "</div></div></div></div>";
     }).join("") + "</div>" +
-    '<div class="punch" id="ig-close" hidden>' + esc(I.closing) + "</div></div>";
+    '<div class="punch" id="ig-close" hidden>' + esc(I.closing) + "</div></div>" +
+    '<div class="panel tint"><h3>' + esc(I.askTitle) + "</h3><p style='margin:0'>" + esc(I.askText) + "</p></div>";
 
   $$("#ig-exp .exp-q").forEach(function (qEl) {
     var i = +qEl.dataset.i, q = I.questions[i];
