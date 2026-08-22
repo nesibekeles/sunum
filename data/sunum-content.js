@@ -111,9 +111,7 @@ window.SUNUM = {
     marketTitle: "Kaç evlilik oldu, ne kadarı Düğün.com'u kullandı?",
     marketLead: "Şehir ve kategori seçin. Resmi evlilik sayısından başlayıp Düğün.com'daki " +
       "çiftlere, oradan sizin kategorinizde teklif alan çiftlere inelim.",
-    marriageNote: "Evlilik sayıları resmi istatistiklerdir (2026 projeksiyon). Düğün.com'daki " +
-      "çift payı, şehirdeki çift tabanımızın evlilik sayısına oranıdır; %50'nin altında kalan " +
-      "şehirlerde ihtiyatlı olmak için %50 varsayılır.",
+    marriageNote: "Evlilik sayıları resmi istatistiklerinin 2026 projeksiyonudur.",
     title: "Bölgenizde şu an ne oluyor?",
     lead: "Aynı şehir ve kategoride, Düğün.com üzerinden gerçekleşen hareketi birlikte okuyalım."
   },
@@ -145,8 +143,18 @@ window.SUNUM = {
       { v: "Ek ücret yok", l: "hizmet pakete dahil",
         d: "Özel Fiyat ve reklam desteği için ayrıca ücret alınmaz." }
     ],
-    quotesTitle: "İş ortaklarımız ne dedi?",
-    quotesLead: "Portföy yöneticilerimizin görüşme notlarından, olduğu gibi.",
+    /* the calendar demo: a month of a venue's Saturdays-only bookings, and what
+       Özel Fiyat does to the weekdays — a picture instead of a paragraph */
+    cal: {
+      t: "Takviminize bakalım",
+      d: "Cumartesi akşamları dolu. Hafta içi, gündüz ve pazar — işte orası gelir getirmeyen " +
+         "boşluk. Özel Fiyat'ı açın, farkı görün.",
+      off: "Bugünkü takvim",
+      on: "Özel Fiyat ile",
+      legendFull: "dolu", legendEmpty: "boş", legendNew: "Özel Fiyat ile dolan",
+      punchOff: "Ayda 30 günün yalnızca <b>4–5'i</b> satılıyor; kalan günler sessiz.",
+      punchOn: "Aynı ay, aynı mekan: boş hafta içi ve pazar günlerine <b>fiyatı gören çift</b> geliyor."
+    },
     ads: [
       { f: "assets/video/ozel-fiyat-reklam-1.mp4", t: "Özel Fiyat reklamı" },
       { f: "assets/video/ozel-fiyat-reklam-2.mp4", t: "Özel Fiyat reklamı" }

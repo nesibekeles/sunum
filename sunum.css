@@ -191,7 +191,7 @@ b, strong { font-weight: 800; }
 }
 .s-topic-home:hover { border-color: var(--pink); transform: translateY(-1px); box-shadow: var(--sh-2); }
 /* the simulator page: one-line, lighter title so the tool fits the first screen */
-.s-topic.compact { padding-top: calc(var(--top-h) + 22px); padding-bottom: 24px; }
+.s-topic.compact { padding-top: calc(var(--top-h) + 22px); padding-bottom: 0; }
 .s-topic.compact .s-topic-head { margin-bottom: 14px; }
 .s-topic.compact .s-kick { margin-bottom: 8px; }
 .s-topic.compact h1 { font-size: clamp(20px, 2.2vw, 26px); font-weight: 600; max-width: none;
@@ -465,7 +465,13 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
 .pcard .pno { width: 30px; height: 30px; border-radius: 50%; background: var(--grad); color: #fff;
   display: grid; place-items: center; font-weight: 900; flex: 0 0 auto; }
 .pcard .ph b { display: block; font-size: 16px; color: var(--dark-pink); }
-.pcard .ph span { display: block; font-size: 12.5px; color: var(--mute); }
+/* `> div > span` on purpose: a bare `.ph span` would also hit the number
+   badge and turn it into a block of text that spills out of its circle */
+.pcard .ph > div > span { display: block; font-size: 12.5px; color: var(--mute); }
+/* the masked name: the shape of a name, blurred so it reads as "a real venue,
+   deliberately hidden" rather than as a typo */
+.pcard .pname { display: block; font-size: 13.5px; font-weight: 800; color: var(--ink-2);
+  letter-spacing: .04em; filter: blur(2.2px); user-select: none; margin-bottom: 1px; }
 .pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .pm { background: #fff; border: 1px solid var(--line-2); border-radius: 11px; padding: 9px 10px; min-width: 0; }
 .pv { font-size: 19px; font-weight: 900; letter-spacing: -.02em; color: var(--ink); white-space: nowrap; }
@@ -477,6 +483,33 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
 .qt { border-left: 4px solid var(--green); background: #F1FBFA; border-radius: 0 12px 12px 0; padding: 12px 14px; }
 .qt p { margin: 0 0 6px; font-size: 15px; font-style: italic; color: var(--ink); }
 .qt .who { font-size: 12px; color: var(--mute); font-weight: 700; }
+
+/* ------------------------------------------------------- calendar demo */
+.cal-wrap { margin-top: 16px; }
+.cal-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+.cal-head span { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--mute); }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal .day { aspect-ratio: 1.35; border-radius: 11px; border: 1px solid var(--line-2);
+  background: #fff; display: grid; place-items: center; font-size: 12.5px; font-weight: 700;
+  color: var(--mute-2); position: relative; transition: background .35s var(--ease),
+  color .35s var(--ease), transform .35s var(--ease), border-color .35s var(--ease); }
+.cal .day.full { background: var(--grad); color: #fff; border-color: transparent; }
+.cal .day.new { background: var(--green); color: #fff; border-color: transparent; transform: scale(1.04); }
+.cal .day.new::after { content: "₺"; position: absolute; right: 6px; top: 4px; font-size: 10px; opacity: .9; }
+.cal-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12.5px; color: var(--mute); }
+.cal-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -2px; margin-right: 6px; }
+.cal-toggle { display: flex; gap: 8px; margin-top: 14px; }
+.cal-toggle .chip[aria-pressed="true"] { background: var(--pink); color: #fff; border-color: var(--pink); }
+.cal-count { display: flex; gap: 10px; align-items: baseline; margin-top: 12px; }
+.cal-count .v { font-size: 34px; font-weight: 900; color: var(--dark-pink); letter-spacing: -.03em; }
+.cal-count .l { font-size: 13.5px; color: var(--ink-2); }
+.facts .stat { position: relative; overflow: hidden; }
+.facts .stat.hero { background: var(--grad); border: 0; color: var(--cream); }
+.facts .stat.hero .v { color: #fff; font-size: 40px; }
+.facts .stat.hero .l, .facts .stat.hero .s { color: rgba(255,250,240,.92); }
+.facts .stat .fi { color: var(--pink); margin-bottom: 6px; }
+.facts .stat.hero .fi { color: #fff; }
 
 @media (max-width: 780px) {
   .funnel3 { grid-template-columns: 1fr; }
