@@ -1,0 +1,105 @@
+/* Login gate — shared by index.html and sunum.html.
+   Self-contained: it must look right before either page's own CSS has decided
+   anything, so it repeats the brand tokens rather than inheriting them. */
+
+.auth-gate {
+  position: fixed; inset: 0; z-index: 900;
+  display: grid; place-items: center; padding: 24px;
+  background: linear-gradient(135deg, #960A4B 0%, #E21B71 100%);
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  animation: authIn .3s cubic-bezier(.16, 1, .3, 1);
+  overflow: auto;
+}
+@keyframes authIn { from { opacity: 0; } to { opacity: 1; } }
+.auth-gate.out { opacity: 0; transition: opacity .3s cubic-bezier(.16, 1, .3, 1); }
+
+/* While the gate is up the page behind it must not scroll under the overlay. */
+html.auth-locked, html.auth-locked body { overflow: hidden; }
+
+.auth-card {
+  width: 100%; max-width: 400px;
+  background: #fff; border-radius: 22px; padding: 34px 32px 26px;
+  box-shadow: 0 2px 6px rgba(25,25,25,.06), 0 30px 70px rgba(90,0,45,.34);
+  text-align: center; color: #191919;
+}
+.auth-logo {
+  height: 26px; display: block; margin: 0 auto 20px;
+  /* the cream logo on a white card needs recolouring to the brand pink */
+  filter: brightness(0) saturate(100%) invert(19%) sepia(89%)
+          saturate(4614%) hue-rotate(324deg) brightness(93%) contrast(97%);
+}
+.auth-card h1 {
+  margin: 0 0 6px; font-size: 22px; font-weight: 800; letter-spacing: -.025em;
+  line-height: 1.2;
+}
+.auth-sub { margin: 0 0 22px; font-size: 13.5px; line-height: 1.5; color: #6b7484; }
+
+.auth-form { text-align: left; }
+.auth-fld {
+  display: block; font-size: 11.5px; font-weight: 800; letter-spacing: .07em;
+  text-transform: uppercase; color: #6b7484; margin: 0 0 5px;
+}
+.auth-form input, .auth-setup input {
+  width: 100%; box-sizing: border-box; font: inherit; font-size: 15px;
+  padding: 11px 13px; margin: 0 0 14px;
+  border: 1.5px solid #e9e5e0; border-radius: 12px; background: #FBF8F4;
+  color: #191919; transition: border-color .15s, background .15s;
+}
+.auth-form input:focus, .auth-setup input:focus {
+  outline: none; border-color: #E21B71; background: #fff;
+}
+.auth-btn {
+  width: 100%; border: 0; cursor: pointer; font: inherit; font-size: 15px;
+  font-weight: 800; color: #FFFAF0; padding: 12px 18px; border-radius: 13px;
+  background: linear-gradient(135deg, #960A4B 0%, #E21B71 100%);
+  transition: transform .15s cubic-bezier(.16, 1, .3, 1), box-shadow .15s;
+}
+.auth-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(226,27,113,.3); }
+.auth-btn:disabled { opacity: .6; cursor: default; }
+.auth-btn.ghost {
+  background: #fff; color: #960A4B; border: 1.5px solid #FFAFC8; box-shadow: none;
+}
+
+.auth-err {
+  background: #FFF1F4; border: 1px solid #FFAFC8; color: #960A4B;
+  border-radius: 11px; padding: 9px 12px; margin: 0 0 12px;
+  font-size: 13px; line-height: 1.45;
+}
+
+.auth-setup {
+  margin-top: 20px; padding-top: 18px; border-top: 1px solid #f4f1ec;
+  text-align: left; font-size: 12.5px; line-height: 1.55; color: #6b7484;
+}
+.auth-setup b { color: #191919; display: block; margin-bottom: 4px; font-size: 13px; }
+.auth-setup p { margin: 0 0 10px; }
+.auth-setup code { background: #FBF8F4; padding: 1px 5px; border-radius: 5px; font-size: 11.5px; }
+.auth-setup input { font-size: 12.5px; }
+
+.auth-foot { margin-top: 18px; font-size: 11.5px; color: #9aa3b2; }
+
+/* ------------------------------------------------------------- header chip */
+.auth-chip {
+  display: flex; align-items: center; gap: 9px; flex: 0 0 auto;
+  padding: 4px 4px 4px 5px; border-radius: 999px;
+  background: rgba(255,250,240,.16); color: #FFFAF0;
+}
+.auth-chip .av {
+  width: 27px; height: 27px; border-radius: 50%; flex: 0 0 auto;
+  background: #FFFAF0; color: #960A4B;
+  display: grid; place-items: center; font-size: 11.5px; font-weight: 800;
+}
+.auth-chip .who { display: flex; flex-direction: column; line-height: 1.15; }
+.auth-chip .who b { font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.auth-chip .who i { font-style: normal; font-size: 10.5px; opacity: .8; }
+.auth-chip .out {
+  border: 0; cursor: pointer; font: inherit; font-size: 11.5px; font-weight: 700;
+  color: #FFFAF0; background: rgba(255,250,240,.18);
+  padding: 5px 11px; border-radius: 999px; transition: background .15s;
+}
+.auth-chip .out:hover { background: rgba(255,250,240,.36); }
+
+/* On a narrow screen the name is the first thing to go; the avatar and the way
+   out both have to survive. */
+@media (max-width: 620px) {
+  .auth-chip .who { display: none; }
+}
