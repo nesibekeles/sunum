@@ -383,32 +383,89 @@ var SIM_CSS =
   "#page1 .cust-info{padding:6px 8px!important;font-size:11px!important}" +
   "#startBtn{margin-top:10px!important;padding:10px!important;font-size:14px!important}}";
 
+/* Page 2 of the simulator ("simülasyon") is shown full-bleed: the deck's title
+   block steps aside, the frame spans the window, so the simulator's own
+   section scrollbar sits at the window's right edge and is the only scrollbar
+   on screen. Each of the three sections is then scaled to fit the frame
+   (CSS zoom), so the scrollbar only ever moves between sections — never
+   inside one — and the dot navigation lands exactly on each section. */
 PAGES.verim = function (el) {
   el.innerHTML = '<iframe class="simframe native" id="sim-frame" src="' +
     C.links.simulatorLocal + '" title="Satış Simülatörü"></iframe>';
-  var f = $("#sim-frame");
+  var f = $("#sim-frame"), topic = $("#s-topic"), doc = null, page2 = false;
+
+  function frameH() {
+    var top = f.getBoundingClientRect().top + window.scrollY;
+    return Math.max(360, window.innerHeight - top - (page2 ? 0 : 6));
+  }
   function fit() {
     if (!document.body.contains(f)) return;
-    var top = f.getBoundingClientRect().top + window.scrollY;
-    f.style.height = Math.max(360, window.innerHeight - top - 6) + "px";
+    f.style.height = frameH() + "px";
+    if (page2 && doc) fitSections();
+  }
+  /* scale every section so its content fits one frame; sections keep the
+     frame's real height so the snap points stay one screen apart */
+  function fitSections() {
+    var H = frameH();
+    $$(".snap section", doc).forEach(function (sec) {
+      sec.style.zoom = "1"; sec.style.minHeight = "0";
+      var pad = parseFloat(getComputedStyle(sec).paddingTop) + parseFloat(getComputedStyle(sec).paddingBottom);
+      var content = 0;
+      Array.prototype.forEach.call(sec.children, function (ch) {
+        if (getComputedStyle(ch).position !== "absolute") content += ch.getBoundingClientRect().height;
+      });
+      content += pad + 12;
+      var z = Math.min(1, H / content);
+      sec.style.zoom = z.toFixed(3);
+      sec.style.minHeight = Math.round(H / z) + "px";
+    });
+  }
+  function setPage(p2) {
+    if (page2 === p2) return;
+    page2 = p2;
+    topic.classList.toggle("sim-full", p2);
+    fit();
   }
   fit();
   window.addEventListener("resize", fit);
-  /* some embedders resize the viewport without a window resize event — the
-     observer on the root element catches those too */
-  if (window.ResizeObserver) {
-    if (simObserver) simObserver.disconnect();
-    simObserver = new ResizeObserver(fit);
-    simObserver.observe(document.documentElement);
-  }
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", fit);
+  /* belt and braces: some embedders change the viewport without any resize
+     event, so the size is also polled while this page is open */
+  var lastVp = "";
+  var poll = setInterval(function () {
+    if (!document.body.contains(f)) { clearInterval(poll); return; }
+    var vp = window.innerWidth + "x" + window.innerHeight;
+    if (vp !== lastVp) { lastVp = vp; fit(); }
+  }, 400);
   f.addEventListener("load", function () {
     fit();
     try {
-      var d = f.contentDocument;
-      if (!d) return;
-      var st = d.createElement("style");
+      doc = f.contentDocument;
+      if (!doc) return;
+      var st = doc.createElement("style");
       st.textContent = SIM_CSS;
-      d.head.appendChild(st);
+      doc.head.appendChild(st);
+      /* the simulator flips page1/page2 by inline display — watch for it */
+      var p2 = doc.getElementById("page2");
+      new doc.defaultView.MutationObserver(function () {
+        setPage(p2.style.display !== "none");
+      }).observe(p2, { attributes: true, attributeFilter: ["style"] });
+      setPage(p2.style.display !== "none");
+      /* dots: scroll to the section's real top (zoom makes the simulator's
+         own offsetTop arithmetic land short) */
+      var snap = doc.getElementById("snap");
+      $$("#dotsNav button", doc).forEach(function (b) {
+        b.addEventListener("click", function (ev) {
+          ev.stopImmediatePropagation(); ev.preventDefault();
+          var sec = doc.getElementById(b.dataset.s);
+          if (!sec) return;
+          /* assignment, not scrollTo(): the container's own
+             scroll-behavior:smooth animates it, and the options form is
+             ignored by some engines when snap + smooth are both on */
+          snap.scrollTop = snap.scrollTop + sec.getBoundingClientRect().top -
+            snap.getBoundingClientRect().top;
+        }, true);
+      });
     } catch (e) { /* cross-origin frame — the simulator keeps its header */ }
   });
 };
