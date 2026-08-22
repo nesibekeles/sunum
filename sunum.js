@@ -369,7 +369,18 @@ var SIM_CSS =
   "html,body{background:transparent!important;overflow:hidden!important;height:100%!important}" +
   "#page1{min-height:0!important;height:100vh!important;box-sizing:border-box!important;" +
   "overflow:auto!important;align-items:safe center!important;padding:14px 16px 18px!important}" +
-  "#foot{display:none!important}";
+  "#foot{display:none!important}" +
+  /* A short frame (laptop with the bookmarks bar, 620px screens): the venue
+     card tightens its paddings and type so it still fits without a scroll. */
+  "@media (max-height:560px){" +
+  "#page1{padding:8px 12px 10px!important}" +
+  "#page1 .card{padding:14px 16px 12px!important;max-width:600px!important}" +
+  "#page1 h2{font-size:16px!important}#page1 .sub{font-size:12px!important;margin-bottom:2px!important}" +
+  "#page1 .lbl{margin:7px 0 4px!important;font-size:11.5px!important}" +
+  "#page1 .seg{gap:5px!important}#page1 .seg button{padding:6px 7px!important;font-size:12px!important;min-width:48px!important}" +
+  "#page1 select,#page1 input[type=text]{padding:7px 10px!important;font-size:13px!important}" +
+  "#page1 .cust-info{padding:6px 8px!important;font-size:11px!important}" +
+  "#startBtn{margin-top:10px!important;padding:10px!important;font-size:14px!important}}";
 
 PAGES.verim = function (el) {
   el.innerHTML = '<iframe class="simframe native" id="sim-frame" src="' +
@@ -378,10 +389,17 @@ PAGES.verim = function (el) {
   function fit() {
     if (!document.body.contains(f)) return;
     var top = f.getBoundingClientRect().top + window.scrollY;
-    f.style.height = Math.max(420, window.innerHeight - top - 6) + "px";
+    f.style.height = Math.max(360, window.innerHeight - top - 6) + "px";
   }
   fit();
   window.addEventListener("resize", fit);
+  /* some embedders resize the viewport without a window resize event — the
+     observer on the root element catches those too */
+  if (window.ResizeObserver) {
+    if (simObserver) simObserver.disconnect();
+    simObserver = new ResizeObserver(fit);
+    simObserver.observe(document.documentElement);
+  }
   f.addEventListener("load", function () {
     fit();
     try {
