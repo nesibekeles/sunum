@@ -321,7 +321,10 @@ PAGES.instagram = function (el) {
         '<div class="exp-move">' + O.moves[q.move] + "</div></div></div></div>";
     }).join("") + "</div>" +
     '<div class="punch" id="ig-close" hidden>' + esc(I.closing) + "</div></div>" +
-    '<div class="panel tint"><h3>' + esc(I.askTitle) + "</h3><p style='margin:0'>" + esc(I.askText) + "</p></div>";
+    '<div class="panel ask"><div class="ask-ic">' +
+    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M4 5h16v10H9l-5 4V5z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg></div>' +
+    "<div><h3>" + esc(I.askTitle) + "</h3><p style='margin:0'>" + esc(I.askText) + "</p></div></div>";
 
   $$("#ig-exp .exp-q").forEach(function (qEl) {
     var i = +qEl.dataset.i, q = I.questions[i];
@@ -541,12 +544,12 @@ function drawMarket(catOnly) {
   var onDc = Math.round(marriages * share);
   var catCouples = seg ? seg.couples[p] : 0;
   var catBox = '<div class="v num" data-count="' + catCouples + '">0</div>' +
-    "<div class='l'>çift " + esc(regionState.cat) + " için teklif aldı</div>" +
+    "<div class='l'>çift " + esc(regionState.cat.toLocaleLowerCase("tr")) + " tercih etti</div>" +
     "<div class='s'>" + esc(label) + " düğünleri</div>";
   var punch = esc(regionState.city) + "'da " + esc(label) + " döneminde <b>" + n(marriages) +
     "</b> evlilik var; bunların <b>" + n(onDc) + "</b> tanesi mekanını Düğün.com'da buldu. " +
-    (catCouples ? "<b>" + n(catCouples) + "</b> çift, " + esc(regionState.cat) +
-     " kategorisinde mekanlardan teklif istedi." : "");
+    (catCouples ? "<b>" + n(catCouples) + "</b> çift " +
+     esc(regionState.cat.toLocaleLowerCase("tr")) + " tercih etti." : "");
   if (catOnly && $("#rg-catbox")) {
     $("#rg-catbox").innerHTML = catBox;
     $("#rg-punch").innerHTML = punch;
@@ -577,8 +580,8 @@ function drawRegion() {
   var sessions = seg ? seg.sessions[regionState.win] : null;
   var label = REG.windows.filter(function (x) { return x.k === regionState.win; })[0].t;
   out.innerHTML = '<div class="grid g2">' +
-    stat(sessions == null ? 0 : sessions, "Çift ziyareti", "firma sayfası oturumu") +
-    stat(w.offers, "Teklif", "tüm teklif yöntemleri") + "</div>" +
+    stat(sessions == null ? 0 : sessions, "Çift ziyareti", "") +
+    stat(w.offers, "Teklif", "") + "</div>" +
     '<div class="punch" style="margin-top:18px">' + esc(regionState.city) + " · " +
     esc(regionState.cat) + " segmentinde <b>" + label.toLowerCase() + "</b> " +
     "<b>" + n(sessions || 0) + "</b> çift ziyareti ve <b>" + n(w.offers) + "</b> teklif oluştu.</div>";
@@ -587,7 +590,7 @@ function drawRegion() {
 function stat(v, l, s, money) {
   return '<div class="stat"><div class="v num" data-count="' + Math.round(v) + '"' +
     (money ? ' data-money="1"' : "") + '>0</div><div class="l">' + esc(l) +
-    '</div><div class="s">' + esc(s) + "</div></div>";
+    "</div>" + (s ? '<div class="s">' + esc(s) + "</div>" : "") + "</div>";
 }
 
 /* ------------------------------------------------------------------ 6. ROI */
@@ -743,18 +746,41 @@ function bindCalendar(CAL) {
   });
 }
 
+/* Order on the page: joker card → four feature cards → the 846 tile beside
+   the with/without comparison → the ad films. The comparison is within-firm
+   (same venues, campaign period vs. no-campaign period, firms whose campaign
+   is over so both periods are complete) and reported as extra visits, not a
+   percentage. */
 PAGES.bosgun = function (el) {
-  var B = S.bosgun, OF = STORY.ozelFiyat || { providers365: 0 };
+  var B = S.bosgun, OF = STORY.ozelFiyat || { providers365: 0 }, CP = OF.compare;
+  var info = B.facts.filter(function (f) { return !f.count; });
+  var hero = B.facts.filter(function (f) { return f.count; })[0];
+
+  var compareHtml = CP
+    ? '<div class="panel cmp"><h3>' + esc(B.cmp.t) + "</h3><p>" + esc(B.cmp.d.replace("{n}", n(CP.n))) + "</p>" +
+      '<div class="cmp-bars">' +
+      '<div class="cmp-row"><span class="cmp-l">' + esc(B.cmp.without) + '</span><div class="cmp-bar"><i style="width:' +
+      Math.round(100 * CP.withoutPerDay / CP.withPerDay) + '%"></i></div><b>' + n(CP.withoutPerDay, 1) + "</b></div>" +
+      '<div class="cmp-row on"><span class="cmp-l">' + esc(B.cmp.with) + '</span><div class="cmp-bar"><i style="width:100%"></i></div><b>' +
+      n(CP.withPerDay, 1) + "</b></div></div>" +
+      '<div class="cmp-out"><div><div class="v num" data-count="' + CP.extraPerMonth + '" data-suffix="">0</div><div class="l">' +
+      esc(B.cmp.extraVisits) + "</div></div>" +
+      '<div><div class="v">+' + n(CP.extraOffersPerMonth, 1) + '</div><div class="l">' + esc(B.cmp.extraOffers) + "</div></div></div>" +
+      '<div class="note">' + esc(B.cmp.note) + "</div></div>"
+    : "";
+
   el.innerHTML = '<div class="panel hero-tint"><h2>' + esc(B.title) + "</h2><p>" + esc(B.lead) + "</p></div>" +
-    calendarDemo(B.cal) +
     '<div class="panel tint"><h2>' + esc(B.joker.t) + "</h2><p>" + esc(B.joker.d) + "</p></div>" +
-    '<div class="grid g3 facts">' + B.facts.map(function (f, i) {
-      var v = f.count ? '<div class="v num" data-count="' + (OF[f.count] || 0) + '">0</div>'
-                      : '<div class="v">' + esc(f.v) + "</div>";
-      return '<div class="stat' + (f.count ? " hero" : "") + '"><div class="fi">' +
-        icon(FACT_ICONS[i % FACT_ICONS.length], 26) + "</div>" + v + '<div class="l">' + esc(f.l) +
+    '<div class="grid g4 facts">' + info.map(function (f, i) {
+      return '<div class="stat"><div class="fi">' + icon(FACT_ICONS[i % FACT_ICONS.length], 26) + "</div>" +
+        '<div class="v">' + esc(f.v) + '</div><div class="l">' + esc(f.l) +
         '</div><div class="s">' + esc(f.d) + "</div></div>";
     }).join("") + "</div>" +
+    '<div class="grid g2 cmp-wrap" style="margin-top:18px">' +
+    (hero ? '<div class="stat hero facts"><div class="fi">' + icon("trend", 30) + "</div>" +
+      '<div class="v num" data-count="' + (OF[hero.count] || 0) + '">0</div><div class="l">' + esc(hero.l) +
+      '</div><div class="s">' + esc(hero.d) + "</div></div>" : "") +
+    compareHtml + "</div>" +
     '<div class="panel" style="margin-top:18px"><h3>' + esc(B.adsTitle) + "</h3><p>" +
     esc(B.adsLead) + '</p><div class="grid g2" style="margin-top:16px">' +
     B.ads.map(function (a) {
@@ -762,7 +788,6 @@ PAGES.bosgun = function (el) {
         'preload="metadata" playsinline></video></div>' +
         '<div class="vid-cap" style="text-align:center">' + esc(a.t) + "</div></div>";
     }).join("") + "</div></div>";
-  bindCalendar(B.cal);
 };
 function dateTr(iso) {
   var p = String(iso || "").split("-");

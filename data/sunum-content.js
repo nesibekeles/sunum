@@ -135,7 +135,7 @@ window.SUNUM = {
     facts: [
       { v: "Kontenjanlı", l: "her firmaya açılmaz",
         d: "Özel Fiyat kontenjanla kullanılır. Gerçekten Düğün.com'a özel, güçlü bir indirim " +
-           "veren firmalara açılır — çiftin gördüğü fiyat gerçekten özel olsun diye." },
+           "veren firmalara açılır." },
       { v: "Yılda 2 kez", l: "kullanım hakkı",
         d: "Her firma Özel Fiyat'ı yılda en fazla iki kez kullanabilir. Boş kalan dönemleri " +
            "hedeflemek için en doğru iki anı birlikte seçeriz." },
@@ -147,17 +147,18 @@ window.SUNUM = {
       { v: "Ek ücret yok", l: "hizmet pakete dahil",
         d: "Özel Fiyat ve reklam desteği için ayrıca ücret alınmaz." }
     ],
-    /* the calendar demo: a month of a venue's Saturdays-only bookings, and what
-       Özel Fiyat does to the weekdays — a picture instead of a paragraph */
-    cal: {
-      t: "Takviminize bakalım",
-      d: "Cumartesi akşamları dolu. Hafta içi, gündüz ve pazar — işte orası gelir getirmeyen " +
-         "boşluk. Özel Fiyat'ı açın, farkı görün.",
-      off: "Bugünkü takvim",
-      on: "Özel Fiyat ile",
-      legendFull: "dolu", legendEmpty: "boş", legendNew: "Özel Fiyat ile dolan",
-      punchOff: "Ayda 30 günün yalnızca <b>4–5'i</b> satılıyor; kalan günler sessiz.",
-      punchOn: "Aynı ay, aynı mekan: boş hafta içi ve pazar günlerine <b>fiyatı gören çift</b> geliyor."
+    /* the within-firm comparison (STORY.ozelFiyat.compare): the same venues,
+       campaign period vs. no-campaign period; {n} is filled at render time */
+    cmp: {
+      t: "Aynı firma, iki dönem",
+      d: "Özel Fiyat'ı daha önce kullanmış ve şu an kapalı olan {n} firmada, kampanyalı ve " +
+         "kampanyasız dönemlerin günlük sayfa ziyaretini karşılaştırdık.",
+      without: "Özel Fiyat'sız dönem · günlük ziyaret",
+      with: "Özel Fiyat'lı dönem · günlük ziyaret",
+      extraVisits: "ekstra ziyaret / ay",
+      extraOffers: "ekstra organik teklif / ay",
+      note: "Son 12 ay, ödeyen mekanlar; her iki dönemde en az 14 listelenme günü olan firmalar. " +
+            "Dönemler mevsimsel olarak birebir eşit değildir."
     },
     ads: [
       { f: "assets/video/ozel-fiyat-reklam-1.mp4", t: "Özel Fiyat reklamı" },

@@ -489,6 +489,36 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
 .qt p { margin: 0 0 6px; font-size: 15px; font-style: italic; color: var(--ink); }
 .qt .who { font-size: 12px; color: var(--mute); font-weight: 700; }
 
+/* ---------------------------------------------- "ask your couples" card */
+.panel.ask { display: flex; gap: 18px; align-items: center;
+  background: linear-gradient(135deg, #FFF1F6 0%, #fff 60%); border: 1.5px solid var(--soft-pink);
+  box-shadow: 0 14px 36px rgba(226,27,113,.14); }
+.panel.ask h3 { color: var(--dark-pink); margin-bottom: 6px; }
+.ask-ic { flex: 0 0 64px; width: 64px; height: 64px; border-radius: 20px; background: var(--grad);
+  color: #fff; display: grid; place-items: center; box-shadow: 0 10px 24px rgba(226,27,113,.35);
+  animation: askPulse 2.4s infinite; }
+@keyframes askPulse {
+  0%, 100% { box-shadow: 0 10px 24px rgba(226,27,113,.35); }
+  50% { box-shadow: 0 10px 24px rgba(226,27,113,.35), 0 0 0 10px rgba(226,27,113,.08); }
+}
+
+/* ------------------------------------------- with/without Özel Fiyat */
+.cmp-wrap { align-items: stretch; }
+.cmp-wrap .stat.hero { display: flex; flex-direction: column; justify-content: center; margin: 0; }
+.panel.cmp { margin: 0; border: 2px solid var(--green); background: linear-gradient(180deg, #fff, #f2fbfa); }
+.cmp-bars { margin-top: 12px; display: flex; flex-direction: column; gap: 9px; }
+.cmp-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; align-items: center; font-size: 12.5px; color: var(--mute); }
+.cmp-row b { font-size: 15px; color: var(--ink); min-width: 44px; text-align: right; }
+.cmp-bar { height: 12px; border-radius: 999px; background: var(--line-2); overflow: hidden; }
+.cmp-bar i { display: block; height: 100%; border-radius: 999px; background: var(--mute-2); }
+.cmp-row.on .cmp-bar i { background: var(--green); }
+.cmp-row.on .cmp-l, .cmp-row.on b { color: #0e6f6a; font-weight: 800; }
+.cmp-out { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.cmp-out > div { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.cmp-out .v { font-size: 28px; font-weight: 900; color: var(--green); letter-spacing: -.03em; }
+.cmp-out .v.num::before { content: "+"; }
+.cmp-out .l { font-size: 12px; color: var(--mute); margin-top: 2px; }
+
 /* ------------------------------------------------------- calendar demo */
 .cal-wrap { margin-top: 16px; }
 .cal-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
