@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>düğün.com · Daha Çok Çift Düğün.com'da</title>
+<!-- ?v= is a cache buster: bump it whenever sunum.css/sunum.js/data change. -->
+<link rel="stylesheet" href="auth.css?v=20260821p">
+<link rel="stylesheet" href="sunum.css?v=20260821p">
+</head>
+<body>
+
+<header class="s-top">
+  <img class="s-logo" src="assets/logo-krem.svg" alt="düğün.com">
+  <span class="s-spacer"></span>
+  <button class="s-home" id="s-home" hidden>← Konular</button>
+  <button class="s-tool" id="s-pen" title="Ekranın üzerine çizin (P)">✏️</button>
+</header>
+
+<!-- landing: the bento board -->
+<main class="s-board" id="s-board">
+  <section class="s-hero">
+    <h1 id="s-title"></h1>
+    
+  </section>
+  <div class="bento" id="bento"></div>
+  <footer class="s-foot"><span id="s-progress"></span></footer>
+</main>
+
+<!-- topic view -->
+<main class="s-topic" id="s-topic" hidden>
+  <div class="s-topic-head">
+    <span class="s-kick" id="s-topic-kick"></span>
+    <h1 id="s-topic-title"></h1>
+  </div>
+  <div id="s-topic-body"></div>
+</main>
+
+<!-- the expanding card used for the open transition -->
+<div class="s-ghost" id="s-ghost" hidden></div>
+
+<canvas id="s-draw"></canvas>
+<div class="s-draw-bar" id="s-draw-bar">
+  <span class="s-sw" data-col="#E21B71" style="background:#E21B71" aria-pressed="true"></span>
+  <span class="s-sw" data-col="#191919" style="background:#191919" aria-pressed="false"></span>
+  <span class="s-sw" data-col="#26B2AB" style="background:#26B2AB" aria-pressed="false"></span>
+  <span class="s-sw" data-col="#FFE24A" style="background:#FFE24A" aria-pressed="false"></span>
+  <button class="s-chip" data-pen="thin" aria-pressed="true">İnce</button>
+  <button class="s-chip" data-pen="mark" aria-pressed="false">🖍️ Vurgula</button>
+  <button class="s-chip" id="s-pen-clear">Temizle</button>
+  <button class="s-chip s-chip-solid" id="s-pen-close">Kapat</button>
+</div>
+
+<script src="data/config.js?v=20260821p"></script>
+<script src="auth.js?v=20260821p"></script>
+<script src="data/content.js?v=20260821p"></script>
+<script src="data/livemap.js?v=20260821p"></script>
+<script src="data/pricing.js?v=20260821p"></script>
+<script src="data/region.js?v=20260821p"></script>
+<script src="data/sunum-content.js?v=20260821p"></script>
+<script src="sunum.js?v=20260821p"></script>
+</body>
+</html>

@@ -1,0 +1,420 @@
+/* düğün.com · Daha Çok Çift Düğün.com'da — the short deck.
+   Same brand tokens as the full panel (Design/DESIGN.md §1–§8), but a calmer,
+   more editorial layout: one board of topics, one topic on screen at a time. */
+
+:root {
+  --pink: #E21B71;
+  --dark-pink: #960A4B;
+  --soft-pink: #FFAFC8;
+  --cream: #FFFAF0;
+  --ink: #191919;
+  --green: #26B2AB;
+  --amber: #FFB401;
+  --coral: #FF8569;
+  --purple: #8D80E5;
+  --grad: linear-gradient(135deg, #960A4B 0%, #E21B71 100%);
+
+  --ink-2: #3d4654;
+  --mute: #6b7484;
+  --mute-2: #9aa3b2;
+  --line: #e9e5e0;
+  --line-2: #f4f1ec;
+  --bg: #FBF8F4;
+  --card: #ffffff;
+
+  --r-card: 20px;
+  --r-btn: 13px;
+  --r-pill: 999px;
+  --sh-1: 0 1px 2px rgba(25,25,25,.04), 0 8px 24px rgba(150,10,75,.06);
+  --sh-2: 0 2px 6px rgba(25,25,25,.05), 0 22px 50px rgba(150,10,75,.14);
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --top-h: 62px;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0; padding: 0; min-height: 100%;
+  background: var(--bg); color: var(--ink);
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { margin: 0; line-height: 1.14; letter-spacing: -.025em; font-weight: 800; }
+p { margin: 0 0 12px; }
+b, strong { font-weight: 800; }
+.num { font-variant-numeric: tabular-nums; }
+.accent { color: var(--dark-pink); }
+
+/* ------------------------------------------------------------------- chrome */
+.s-top {
+  position: fixed; inset: 0 0 auto 0; height: var(--top-h); z-index: 60;
+  display: flex; align-items: center; gap: 14px; padding: 0 24px;
+  background: var(--grad); box-shadow: 0 1px 20px rgba(150,10,75,.2);
+}
+.s-logo { height: 22px; display: block; }
+.s-spacer { flex: 1; }
+.s-home, .s-tool {
+  border: 0; cursor: pointer; font: inherit; font-size: 13.5px; font-weight: 700;
+  color: var(--cream); background: rgba(255,250,240,.16);
+  padding: 8px 15px; border-radius: var(--r-pill);
+  transition: background .15s var(--ease);
+}
+.s-home:hover, .s-tool:hover { background: rgba(255,250,240,.32); }
+.s-tool.on { background: var(--cream); color: var(--dark-pink); }
+
+/* -------------------------------------------------------------------- board */
+/* The whole board has to be readable at a glance — no scrolling to find a
+   topic. The grid takes whatever height is left after the header and hero. */
+.s-board {
+  max-width: 1220px; margin: 0 auto; height: 100vh; min-height: 620px;
+  padding: calc(var(--top-h) + 22px) 26px 16px;
+  display: flex; flex-direction: column; overflow: auto;
+}
+.s-hero { text-align: center; margin-bottom: clamp(12px, 2.4vh, 22px); flex: 0 0 auto; }
+.s-hero h1 {
+  font-size: clamp(24px, min(3.6vw, 5.4vh), 44px); letter-spacing: -.03em;
+  background: var(--grad); -webkit-background-clip: text; background-clip: text;
+  color: transparent; padding-bottom: 4px;
+}
+
+.bento {
+  flex: 1 1 auto; min-height: 0;
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+  /* a floor under the row height: below this the tiles would be unreadable, so
+     the board scrolls instead of crushing them */
+  grid-template-rows: repeat(4, minmax(84px, 1fr));
+  /* Placed by attention, not by reading order. On a laptop or tablet the eye
+     lands top-left, sweeps right along the top, then drops down the left — so
+     the two heaviest topics take the whole top band, the two mid-weight ones
+     take the middle, and the four light ones sit on the bottom rail. Weight
+     descends by BAND, never in a diagonal cascade. */
+  grid-template-areas:
+    "a a b b"
+    "a a b b"
+    "c c d d"
+    "e f g h";
+}
+.tile {
+  position: relative; overflow: hidden; text-align: left; cursor: pointer;
+  border: 1px solid var(--line); background: var(--card);
+  border-radius: var(--r-card); font: inherit; color: inherit;
+  /* padding and type scale with the SHORTER axis: on a 660px-tall laptop the
+     row is ~100px and fixed 22px padding + 19px type does not fit */
+  padding: clamp(10px, 1.65vh, 20px) clamp(13px, 1.4vw, 22px);
+  box-shadow: var(--sh-1); display: flex; flex-direction: column;
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease),
+              border-color .3s var(--ease), opacity .4s var(--ease),
+              filter .4s var(--ease);
+}
+.tile .ico { color: var(--pink); display: block;
+  width: clamp(17px, 3vh, 28px); height: auto; }
+.tile[data-w="4"] .ico { width: clamp(20px, 3.8vh, 32px); }
+.tile:hover { transform: translateY(-4px); box-shadow: var(--sh-2); border-color: var(--soft-pink); }
+.tile:focus-visible { outline: 3px solid var(--soft-pink); outline-offset: 3px; }
+.tile::after {
+  content: ""; position: absolute; inset: auto -30% -60% auto;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,175,200,.34), transparent 68%);
+  opacity: 0; transition: opacity .35s var(--ease);
+}
+.tile:hover::after { opacity: 1; }
+.tile .ic { display: block; }
+/* No line-clamp here on purpose. -webkit-line-clamp derives the element height
+   from a line count measured against the original line-height, so with Turkish
+   headings (İ plus ğ/ş/ç in the same line box) it reports a height a few px
+   short and overflow:hidden then shaves the descenders. What actually keeps the
+   text inside the tile is the type scaling with the SHORTER viewport axis. */
+.tile h3 { margin-top: auto; letter-spacing: -.02em;
+  font-size: clamp(13px, min(1.32vw, 2.4vh), 19px); line-height: 1.27; }
+.tile .d { color: var(--mute); margin-top: clamp(3px, .7vh, 6px);
+  font-size: clamp(10.5px, min(1vw, 1.7vh), 13px); line-height: 1.35; }
+.tile .go {
+  position: absolute; top: clamp(10px, 1.7vh, 20px); right: clamp(12px, 1.3vw, 20px);
+  width: clamp(22px, 3.4vh, 30px); height: clamp(22px, 3.4vh, 30px);
+  border-radius: 50%; background: var(--line-2); color: var(--mute);
+  display: grid; place-items: center; font-size: clamp(11px, 1.6vh, 14px);
+  font-weight: 800; transition: all .3s var(--ease);
+}
+.tile .go svg { width: 62%; height: 62%; }
+.tile:hover .go { background: var(--pink); color: #fff; transform: translateX(2px); }
+
+/* bigger tiles carry more weight, visually as well as in the grid */
+.tile[data-w="4"] { background: linear-gradient(155deg, #fff 0%, #FFF6F9 100%); }
+.tile[data-w="4"] h3 { font-size: clamp(18px, min(2.2vw, 4.4vh), 30px); }
+.tile[data-w="3"] h3 { font-size: clamp(15px, min(1.6vw, 3vh), 22px); }
+
+/* A covered topic steps back rather than lighting up: the ones still to come
+   should stay the loudest thing on the board. */
+.tile.done { opacity: .46; filter: saturate(.35); border-color: var(--line-2);
+  background: #fff; box-shadow: none; }
+.tile.done:hover { opacity: .82; filter: saturate(.7); }
+.tile.done .go { background: var(--green); color: #fff; }
+.tile.done .ico { color: var(--mute-2); }
+
+.s-foot { margin-top: clamp(8px, 1.4vh, 14px); text-align: center; color: var(--mute-2);
+  font-size: 12px; flex: 0 0 auto; }
+
+/* on a genuinely short screen the subtitle line is the first thing to go */
+@media (max-height: 640px) {
+  .tile[data-w="2"] .d, .tile[data-w="3"] .d { display: none; }
+}
+
+/* ---------------------------------------------------- open/close transition */
+.s-ghost {
+  position: fixed; z-index: 70; border-radius: var(--r-card);
+  background: var(--card); border: 1px solid var(--soft-pink);
+  box-shadow: var(--sh-2); pointer-events: none;
+  transition: all .42s var(--ease);
+}
+
+/* -------------------------------------------------------------------- topic */
+.s-topic { max-width: 1080px; margin: 0 auto; padding: calc(var(--top-h) + 40px) 24px 80px;
+  animation: topicIn .42s var(--ease); }
+@keyframes topicIn { from { transform: translateY(16px); } to { transform: none; } }
+.s-topic-head { margin-bottom: 32px; }
+.s-kick {
+  display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--pink); background: #FFE9F1;
+  padding: 5px 13px; border-radius: var(--r-pill); margin-bottom: 14px;
+}
+.s-topic-head h1 { font-size: clamp(28px, 4vw, 42px); max-width: 20ch; }
+
+.panel {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card);
+  padding: 28px; box-shadow: var(--sh-1); margin-bottom: 18px;
+}
+.panel h2 { font-size: 24px; margin-bottom: 10px; }
+.panel h3 { font-size: 18px; margin-bottom: 8px; }
+.panel > p { color: var(--ink-2); }
+.panel.tint { background: linear-gradient(160deg, #fff, #FFF6F9); border-color: #FBDDE8; }
+.panel.hero-tint { background: var(--grad); color: var(--cream); border: 0; }
+.panel.hero-tint h2 { font-size: clamp(24px, 3.2vw, 34px); }
+.panel.hero-tint p { color: rgba(255,250,240,.94); font-size: 17px; max-width: 62ch; }
+.panel.hero-tint .s-kick { background: rgba(255,250,240,.2); color: var(--cream); }
+
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(2, 1fr); }
+.g3 { grid-template-columns: repeat(3, 1fr); }
+.g4 { grid-template-columns: repeat(4, 1fr); }
+
+.note { font-size: 12.5px; color: var(--mute-2); font-style: italic; margin-top: 12px; }
+.rep-note {
+  border-left: 4px solid var(--purple); background: #F8F7FE; color: #4b4590;
+  padding: 12px 16px; border-radius: 0 var(--r-btn) var(--r-btn) 0;
+  font-size: 13.5px; margin: 14px 0;
+}
+.rep-note b.tag { display: block; font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--purple); margin-bottom: 4px; }
+body.present .rep-note { display: none !important; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px;
+  border-radius: var(--r-pill); font-size: 12px; font-weight: 800; }
+.pill.pink { background: #FFE9F1; color: var(--dark-pink); }
+.pill.ok { background: #E6F6F5; color: #12726d; }
+
+.btn {
+  border: 0; cursor: pointer; font: inherit; font-weight: 800; font-size: 14.5px;
+  padding: 12px 22px; border-radius: var(--r-btn);
+  background: var(--pink); color: #fff; box-shadow: 0 8px 20px rgba(226,27,113,.24);
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: transform .15s var(--ease), box-shadow .15s var(--ease);
+}
+.btn:hover { box-shadow: 0 12px 26px rgba(226,27,113,.32); }
+.btn:active { transform: scale(.98); }
+.btn.ghost { background: #fff; color: var(--dark-pink);
+  border: 1.5px solid #FBDDE8; box-shadow: none; }
+
+input[type=text], input[type=search], input[type=number], select {
+  font: inherit; font-size: 15px; padding: 12px 15px; border-radius: var(--r-btn);
+  border: 1.5px solid var(--line); background: #fff; color: var(--ink); width: 100%;
+}
+input:focus, select:focus { outline: 0; border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(226,27,113,.1); }
+label.fld { display: block; font-size: 11.5px; font-weight: 800; color: var(--mute);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+
+/* ------------------------------------------------------------ google search */
+.gbox { display: flex; align-items: center; gap: 12px; border: 1.5px solid var(--line);
+  border-radius: var(--r-pill); padding: 6px 6px 6px 20px; background: #fff;
+  box-shadow: 0 2px 10px rgba(25,25,25,.05); }
+.gbox:focus-within { border-color: var(--pink); box-shadow: 0 0 0 4px rgba(226,27,113,.09); }
+.gbox svg { flex: 0 0 auto; }
+.gbox input { border: 0; padding: 10px 0; box-shadow: none !important; font-size: 16px; }
+.gbox input:focus { border: 0; }
+.gbox .btn { border-radius: var(--r-pill); }
+
+/* ------------------------------------------------------------- traffic bars */
+.tstack { display: flex; height: 40px; border-radius: var(--r-pill); overflow: hidden;
+  box-shadow: 0 2px 10px rgba(150,10,75,.1); }
+.tstack div { display: grid; place-items: center; font-size: 12.5px; font-weight: 800;
+  color: #fff; }
+.tlegend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; font-size: 13px;
+  color: var(--ink-2); }
+.tlegend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block;
+  margin-right: 7px; }
+.punch { border-left: 4px solid var(--pink); background: #FFF6F9;
+  padding: 16px 20px; border-radius: 0 var(--r-btn) var(--r-btn) 0;
+  font-size: 16px; line-height: 1.6; margin-top: 18px; }
+
+/* ------------------------------------------------------------------ the map */
+.s-map-wrap { position: relative; border-radius: var(--r-card); overflow: hidden;
+  background: linear-gradient(165deg, #F7FAFD, #FDFBF8); border: 1px solid var(--line-2);
+  padding: 18px 16px 26px; margin-top: 16px; }
+.s-map-wrap svg { width: 100%; height: auto; display: block; }
+.s-land { fill: #FFF1F6; stroke: var(--soft-pink); stroke-width: 1.1;
+  stroke-linejoin: round; }
+.s-pin .halo { fill: rgba(226,27,113,.14); }
+.s-pin .dot { fill: var(--pink); }
+.s-bubs { position: absolute; inset: 18px 16px 26px; pointer-events: none; }
+.s-bub { position: absolute; transform: translate(-50%, -122%); }
+.s-bub.below { transform: translate(-50%, 30%); }
+.s-bub.alignL { transform: translate(-16px, -122%); }
+.s-bub.alignL.below { transform: translate(-16px, 30%); }
+.s-bub.alignR { transform: translate(calc(-100% + 16px), -122%); }
+.s-bub.alignR.below { transform: translate(calc(-100% + 16px), 30%); }
+/* Laid out like the card on dugun.com: cover photo, city, provider name,
+   category, then the one line about what happened. */
+.s-bub .box { position: relative; background: #fff; border-radius: 14px; padding: 11px 13px;
+  width: 252px; box-shadow: 0 12px 30px rgba(150,10,75,.18);
+  border: 1px solid var(--line); border-left: 3px solid var(--pink);
+  animation: bubIn .4s var(--ease); }
+.s-bub.deal .box { border-left-color: var(--green); }
+.s-bub.out .box { opacity: 0; transform: translateY(6px) scale(.95);
+  transition: opacity .35s var(--ease), transform .35s var(--ease); animation: none; }
+@keyframes bubIn { from { transform: translateY(6px) scale(.94); } to { transform: none; } }
+
+.s-bub .hd { display: flex; align-items: center; gap: 10px; }
+.s-bub .ph { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%;
+  object-fit: cover; background: var(--line-2); border: 1px solid var(--line); }
+/* Fallback when the cover cannot load — offline, or a deleted gallery image.
+   The balloon must still read as a real venue card, never as a broken image. */
+.s-bub .ph.ph-fb { display: grid; place-items: center; font-size: 15px; font-weight: 900;
+  color: #fff; background: var(--grad); border: 0; }
+.s-bub .tx { min-width: 0; }
+.s-bub .city { display: block; font-size: 11px; font-weight: 800; color: var(--pink);
+  line-height: 1.3; }
+.s-bub b { display: block; font-size: 12.5px; line-height: 1.25; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.s-bub .cat { display: block; font-size: 11px; color: var(--mute); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.s-bub .act { display: block; font-size: 11.5px; font-weight: 700; margin-top: 9px;
+  padding-top: 8px; border-top: 1px solid var(--line-2); }
+.s-bub .act i { font-style: normal; font-weight: 500; color: var(--mute-2); }
+
+.live-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px;
+  font-weight: 900; letter-spacing: .08em; color: #a3123f; background: #FFE9F1;
+  padding: 4px 10px; border-radius: var(--r-pill); }
+.live-badge i { width: 7px; height: 7px; border-radius: 50%; background: var(--pink);
+  animation: livePulse 1.6s infinite; }
+/* The feed is a week of history, not a live wire — the badge says so and the
+   dot stops pulsing, because a pulsing dot is a claim of its own. */
+.live-badge.week { color: #0e6f6a; background: #E4F6F5; }
+.live-badge.week i { background: var(--green); animation: none; }
+@keyframes livePulse {
+  0% { box-shadow: 0 0 0 0 rgba(226,27,113,.5); }
+  70% { box-shadow: 0 0 0 8px rgba(226,27,113,0); }
+  100% { box-shadow: 0 0 0 0 rgba(226,27,113,0); }
+}
+
+/* ------------------------------------------------------------------- pillars */
+.pillar { padding: 24px; border-radius: var(--r-card); border: 1px solid var(--line);
+  background: #fff; box-shadow: var(--sh-1); }
+.pillar .ic { display: block; }
+.pillar .ico { color: var(--pink); }
+.pillar h3 { margin: 12px 0 8px; color: var(--dark-pink); font-size: 18px; }
+.pillar p { font-size: 14px; color: var(--ink-2); margin: 0; }
+.pillar .pf { margin-top: 14px; font-size: 12.5px; color: var(--mute);
+  border-left: 3px solid var(--soft-pink); padding-left: 11px; }
+
+/* ------------------------------------------------------------------ numbers */
+.stat { text-align: center; padding: 22px 14px; border-radius: var(--r-card);
+  background: #fff; border: 1px solid var(--line); box-shadow: var(--sh-1); }
+.stat .v { font-size: 32px; font-weight: 900; color: var(--dark-pink); letter-spacing: -.03em; }
+.stat .l { font-size: 13px; font-weight: 800; margin-top: 4px; }
+.stat .s { font-size: 12.5px; color: var(--mute); margin-top: 6px; }
+.roi-hero { background: var(--grad); color: var(--cream); border-radius: var(--r-card);
+  padding: 26px; box-shadow: var(--sh-2); }
+.roi-cell { text-align: center; }
+.roi-cell .v { font-size: 34px; font-weight: 900; letter-spacing: -.03em; }
+.roi-cell .l { font-size: 13px; opacity: .92; font-weight: 700; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 9px; }
+.chip { border: 1.5px solid var(--line); background: #fff; cursor: pointer; font: inherit;
+  font-size: 13.5px; font-weight: 700; color: var(--ink-2);
+  padding: 8px 16px; border-radius: var(--r-pill); transition: all .15s var(--ease); }
+.chip:hover { border-color: var(--pink); color: var(--dark-pink); }
+.chip[aria-pressed="true"] { border-color: var(--pink); background: #FFE9F1; color: var(--dark-pink); }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--mute); padding: 10px 12px;
+  border-bottom: 2px solid var(--line); }
+td { padding: 12px; border-bottom: 1px solid var(--line-2); }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+.tbl-wrap { overflow-x: auto; }
+
+.simframe { width: 100%; height: 76vh; border: 1px solid var(--line);
+  border-radius: var(--r-card); background: #fff; }
+.move-no { width: 30px; height: 30px; border-radius: 50%; background: var(--grad);
+  color: #fff; display: grid; place-items: center; font-weight: 900; font-size: 14px;
+  margin-bottom: 12px; }
+.proof { margin: 10px 0 0; padding-left: 20px; font-size: 14.5px; color: var(--ink-2); }
+.proof li { margin-bottom: 7px; }
+.step-row { display: flex; gap: 18px; padding: 20px 0; border-bottom: 1px dashed var(--line); }
+.step-row:last-child { border-bottom: 0; }
+.step-row .no { flex: 0 0 38px; height: 38px; border-radius: 50%; background: var(--grad);
+  color: #fff; display: grid; place-items: center; font-weight: 900; font-size: 15px; }
+.step-row h3 { font-size: 17px; }
+.vid { aspect-ratio: 16/9; border-radius: var(--r-card); overflow: hidden;
+  background: #12100f; box-shadow: var(--sh-1); border: 1px solid var(--line); }
+.vid iframe, .vid video { width: 100%; height: 100%; display: block; border: 0; }
+/* the Özel Fiyat ads are story-format (1080x1920) — a 16:9 box would letterbox
+   them into a black frame with a stamp in the middle */
+.vid.portrait { aspect-ratio: 9/16; max-width: 292px; margin: 0 auto; }
+.vid.portrait video { object-fit: cover; }
+.vid-cap { margin-top: 10px; font-size: 13px; color: var(--mute); }
+.vid-cap b { display: block; color: var(--ink); font-size: 14px; margin-bottom: 2px; }
+.simframe.tall { height: calc(100vh - var(--top-h) - 150px); min-height: 560px; }
+
+/* ------------------------------------------------------------------- pen */
+#s-draw { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 80;
+  display: none; touch-action: none; mix-blend-mode: multiply; }
+#s-draw.on { display: block; }
+.s-draw-bar { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+  z-index: 90; display: none; align-items: center; gap: 9px; padding: 10px 14px;
+  background: #fff; border-radius: var(--r-pill); box-shadow: var(--sh-2);
+  border: 1px solid var(--line); }
+.s-draw-bar.on { display: flex; }
+.s-sw { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff;
+  box-shadow: 0 0 0 1.5px var(--line); cursor: pointer; }
+.s-sw[aria-pressed="true"] { box-shadow: 0 0 0 2.5px var(--pink); transform: scale(1.1); }
+.s-chip { border: 1.5px solid var(--line); background: #fff; cursor: pointer; font: inherit;
+  font-size: 13px; font-weight: 700; padding: 7px 13px; border-radius: var(--r-pill); }
+.s-chip[aria-pressed="true"] { border-color: var(--pink); background: #FFE9F1; color: var(--dark-pink); }
+.s-chip-solid { background: var(--pink); color: #fff; border-color: var(--pink); }
+
+/* -------------------------------------------------------------- responsive */
+@media (max-width: 980px) {
+  /* below this the board is taller than the screen anyway — let it scroll */
+  .s-board { height: auto; overflow: visible; padding-bottom: 50px; }
+  .bento { grid-template-rows: none; grid-auto-rows: 158px;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-areas: "a a" "a a" "b b" "b b" "c c" "d d" "e f" "g h"; }
+  .g4 { grid-template-columns: repeat(2, 1fr); }
+  .g3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .bento { grid-template-columns: 1fr; grid-auto-rows: 132px; grid-template-rows: none;
+    grid-template-areas: "a" "a" "b" "b" "c" "d" "e" "f" "g" "h"; }
+  .g2, .g3, .g4 { grid-template-columns: 1fr; }
+  .s-board, .s-topic { padding-left: 16px; padding-right: 16px; }
+  .panel { padding: 20px; }
+  /* a phone-sized map cannot host readable balloons — feed them underneath */
+  .s-bubs { position: static; inset: auto; margin-top: 14px;
+    display: flex; flex-direction: column; gap: 8px; }
+  .s-bub, .s-bub.below, .s-bub.alignL, .s-bub.alignR { position: static; transform: none; }
+  .s-bub .box { width: auto; }
+}
