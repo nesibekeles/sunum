@@ -1012,11 +1012,9 @@ function mapMarkup() {
 }
 function stopMap() { if (mapTimer) { clearInterval(mapTimer); mapTimer = null; } }
 
-/* Several balloons live at once and the whole feed rotates through, the way
-   the map on dugun.com behaves. A new balloon is placed in a city that does
-   not already have one on screen whenever the queue allows, so three
-   İstanbul cards never stack on the same pin. */
-var MAP_LIVE = 3, MAP_EVERY = 2300, MAP_TTL = MAP_LIVE * MAP_EVERY + 600;
+/* One balloon at a time — two at once overlap on the western pins — and the
+   whole feed rotates through, consecutive balloons moving between cities. */
+var MAP_LIVE = 1, MAP_EVERY = 3200, MAP_TTL = MAP_EVERY + 400;
 
 function startMap() {
   stopMap();
