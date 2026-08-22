@@ -1222,7 +1222,14 @@ var Pen = (function () {
     cv.classList.toggle("on", on);
     bar.classList.toggle("on", on);
     $("#s-pen").classList.toggle("on", on);
-    if (on) fit();
+    if (on) {
+      fit();
+      /* the pen opens as the yellow highlighter every time — that is what a
+         rep reaches for first (striking a list price, underlining a figure);
+         the thin pen is one click away */
+      var mark = $('.s-draw-bar [data-pen="mark"]');
+      if (mark) mark.click();
+    }
   }
   return { toggle: toggle };
 })();
