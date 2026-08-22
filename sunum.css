@@ -48,11 +48,14 @@ b, strong { font-weight: 800; }
 .accent { color: var(--dark-pink); }
 
 /* ------------------------------------------------------------------- chrome */
+/* z-index above the pen canvas (80): the pen button has to stay clickable
+   while drawing, so a second click on it closes the pen. */
 .s-top {
-  position: fixed; inset: 0 0 auto 0; height: var(--top-h); z-index: 60;
-  display: flex; align-items: center; gap: 14px; padding: 0 24px;
+  position: fixed; inset: 0 0 auto 0; height: var(--top-h); z-index: 85;
+  display: flex; align-items: center; gap: 12px; padding: 0 24px;
   background: var(--grad); box-shadow: 0 1px 20px rgba(150,10,75,.2);
 }
+.s-logo-btn { border: 0; background: none; padding: 4px 0; cursor: pointer; display: block; }
 .s-logo { height: 22px; display: block; }
 .s-spacer { flex: 1; }
 .s-home, .s-tool {
@@ -174,7 +177,25 @@ b, strong { font-weight: 800; }
 .s-topic { max-width: 1080px; margin: 0 auto; padding: calc(var(--top-h) + 40px) 24px 80px;
   animation: topicIn .42s var(--ease); }
 @keyframes topicIn { from { transform: translateY(16px); } to { transform: none; } }
-.s-topic-head { margin-bottom: 32px; }
+/* title on the left, the way home on the right — inside the page, not in the
+   header, so it reads as part of the topic */
+.s-topic-head { margin-bottom: 32px; display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 18px; }
+.s-topic-lead { min-width: 0; }
+.s-topic-home {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; margin-top: 4px;
+  border: 1.5px solid var(--line); background: #fff; cursor: pointer; font: inherit;
+  font-size: 13.5px; font-weight: 700; color: var(--dark-pink);
+  padding: 9px 15px; border-radius: var(--r-pill); box-shadow: var(--sh-1);
+  transition: all .15s var(--ease);
+}
+.s-topic-home:hover { border-color: var(--pink); transform: translateY(-1px); box-shadow: var(--sh-2); }
+/* the simulator page: one-line, lighter title so the tool fits the first screen */
+.s-topic.compact { padding-top: calc(var(--top-h) + 22px); padding-bottom: 24px; }
+.s-topic.compact .s-topic-head { margin-bottom: 14px; }
+.s-topic.compact .s-kick { margin-bottom: 8px; }
+.s-topic.compact h1 { font-size: clamp(20px, 2.2vw, 26px); font-weight: 600; max-width: none;
+  white-space: nowrap; letter-spacing: -.015em; }
 .s-kick {
   display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .12em;
   text-transform: uppercase; color: var(--pink); background: #FFE9F1;
@@ -378,6 +399,92 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
 .vid-cap { margin-top: 10px; font-size: 13px; color: var(--mute); }
 .vid-cap b { display: block; color: var(--ink); font-size: 14px; margin-bottom: 2px; }
 .simframe.tall { height: calc(100vh - var(--top-h) - 150px); min-height: 560px; }
+/* "native": the simulator is sized to its content by sunum.js and loses its
+   box, so it reads as a page of this deck — one scrollbar, the deck's */
+.simframe.native { height: 560px; border: 0; border-radius: 0; background: transparent;
+  box-shadow: none; overflow: hidden; display: block; }
+
+/* --------------------------------------------------------- the experiment */
+.exp { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
+.exp-q { display: flex; gap: 16px; padding: 18px; border-radius: var(--r-card);
+  border: 1px solid var(--line); background: #fff; opacity: .42; transition: opacity .3s var(--ease); }
+.exp-q.on { opacity: 1; }
+.exp-q.done { border-color: #FBDDE8; background: linear-gradient(160deg, #fff, #FFF8FA); }
+.exp-no { flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--grad); color: #fff;
+  display: grid; place-items: center; font-weight: 900; font-size: 15px; }
+.exp-body { flex: 1; min-width: 0; }
+.exp-ask { font-size: 17px; font-weight: 800; letter-spacing: -.015em; margin-bottom: 12px; }
+.exp-q:not(.on) .exp-opts .chip { pointer-events: none; }
+.exp-opts .chip[aria-pressed="true"]:disabled { opacity: 1; }
+.exp-opts .chip:disabled:not([aria-pressed="true"]) { opacity: .45; }
+.exp-reveal { margin-top: 14px; animation: topicIn .4s var(--ease); }
+.exp-react { color: var(--ink-2); margin: 0 0 10px; font-size: 15px; }
+.exp-move { border-left: 4px solid var(--pink); background: #FFF6F9; padding: 12px 14px;
+  border-radius: 0 12px 12px 0; font-size: 15px; }
+
+/* ------------------------------------------------------------ the funnel */
+.funnel3 { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 10px; align-items: stretch; }
+.f3 { text-align: center; padding: 20px 12px; border-radius: var(--r-card); background: #fff;
+  border: 1px solid var(--line); box-shadow: var(--sh-1); }
+.f3 .v { font-size: 30px; font-weight: 900; color: var(--dark-pink); letter-spacing: -.03em; }
+.f3 .l { font-size: 13px; font-weight: 800; margin-top: 4px; }
+.f3 .s { font-size: 12px; color: var(--mute); margin-top: 5px; }
+.f3.hi { background: var(--grad); color: var(--cream); border: 0; box-shadow: var(--sh-2); }
+.f3.hi .v { color: #fff; } .f3.hi .s { color: rgba(255,250,240,.85); }
+.f3-arrow { display: grid; place-items: center; font-size: 26px; color: var(--mute-2); font-weight: 900; }
+
+/* ---------------------------------------------------------- the ROI card */
+.roi-card { border: 2px solid var(--green); background: linear-gradient(180deg, #fff, #f2fbfa); }
+.roi-card .hint { font-weight: 500; color: var(--mute-2); font-size: 11px; margin-left: 6px; text-transform: none; letter-spacing: 0; }
+.roi-out { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
+.roi-out .o { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.roi-out .t { font-size: 10.5px; color: var(--mute); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; min-height: 28px; }
+.roi-out .v { font-size: clamp(19px, 1.9vw, 27px); font-weight: 900; letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; margin: 4px 0 6px; }
+.roi-out .s { font-size: 11px; color: var(--mute); line-height: 1.3; }
+.roi-out .o.pos .v { color: var(--green); }
+.roi-out .o.big { background: linear-gradient(135deg, #007A87, var(--green)); color: #fff; border-color: transparent; }
+.roi-out .o.big .t, .roi-out .o.big .s { color: rgba(255,255,255,.9); }
+
+/* ------------------------------------------------------------ accordions */
+.acc { border: 1px solid var(--line); background: #fff; border-radius: var(--r-card);
+  box-shadow: var(--sh-1); margin-bottom: 14px; overflow: hidden; }
+.acc-h { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border: 0; background: none; cursor: pointer; font: inherit; text-align: left; padding: 18px 22px; }
+.acc-t { font-size: 18px; font-weight: 800; letter-spacing: -.02em; color: var(--dark-pink); }
+.acc-ic { width: 30px; height: 30px; border-radius: 50%; background: var(--line-2); color: var(--mute);
+  display: grid; place-items: center; font-weight: 900; font-size: 18px; flex: 0 0 auto; }
+.acc.open .acc-ic { background: var(--pink); color: #fff; }
+.acc-b { padding: 0 22px 22px; }
+.acc-d { color: var(--ink-2); font-size: 14.5px; margin: 0 0 14px; }
+
+/* anonymised provider cards */
+.pcards { margin-top: 4px; }
+.pcard { border: 1px solid var(--line); border-radius: var(--r-card); padding: 16px 18px;
+  background: linear-gradient(160deg, #fff, #FFF8FA); min-width: 0; }
+.pcard .ph { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.pcard .pno { width: 30px; height: 30px; border-radius: 50%; background: var(--grad); color: #fff;
+  display: grid; place-items: center; font-weight: 900; flex: 0 0 auto; }
+.pcard .ph b { display: block; font-size: 16px; color: var(--dark-pink); }
+.pcard .ph span { display: block; font-size: 12.5px; color: var(--mute); }
+.pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pm { background: #fff; border: 1px solid var(--line-2); border-radius: 11px; padding: 9px 10px; min-width: 0; }
+.pv { font-size: 19px; font-weight: 900; letter-spacing: -.02em; color: var(--ink); white-space: nowrap; }
+.pl { font-size: 10.5px; color: var(--mute); margin-top: 2px; line-height: 1.3; }
+
+/* Özel Fiyat facts + quotes */
+.facts .stat .v { font-size: 26px; }
+.quotes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+.qt { border-left: 4px solid var(--green); background: #F1FBFA; border-radius: 0 12px 12px 0; padding: 12px 14px; }
+.qt p { margin: 0 0 6px; font-size: 15px; font-style: italic; color: var(--ink); }
+.qt .who { font-size: 12px; color: var(--mute); font-weight: 700; }
+
+@media (max-width: 780px) {
+  .funnel3 { grid-template-columns: 1fr; }
+  .f3-arrow { transform: rotate(90deg); }
+  .roi-out { grid-template-columns: repeat(2, 1fr); }
+  .quotes { grid-template-columns: 1fr; }
+  .s-topic.compact h1 { white-space: normal; }
+}
 
 /* ------------------------------------------------------------------- pen */
 #s-draw { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 80;

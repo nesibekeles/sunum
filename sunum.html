@@ -5,23 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>düğün.com · Daha Çok Çift Düğün.com'da</title>
 <!-- ?v= is a cache buster: bump it whenever sunum.css/sunum.js/data change. -->
-<link rel="stylesheet" href="auth.css?v=20260821r">
-<link rel="stylesheet" href="sunum.css?v=20260821r">
+<link rel="stylesheet" href="auth.css?v=20260822a">
+<link rel="stylesheet" href="sunum.css?v=20260822a">
 </head>
 <body>
 
+<!-- header: logo (home) · spacer · pen · user chip (appended by auth.js, so it
+     lands at the far right) -->
 <header class="s-top">
-  <img class="s-logo" src="assets/logo-krem.svg" alt="düğün.com">
+  <button class="s-logo-btn" id="s-logo-home" title="Ana sayfa">
+    <img class="s-logo" src="assets/logo-krem.svg" alt="düğün.com">
+  </button>
   <span class="s-spacer"></span>
-  <button class="s-home" id="s-home" hidden>← Konular</button>
-  <button class="s-tool" id="s-pen" title="Ekranın üzerine çizin (P)">✏️</button>
+  <button class="s-tool" id="s-pen" title="Ekranın üzerine çizin (P) — tekrar tıklayınca kapanır">✏️</button>
 </header>
 
 <!-- landing: the bento board -->
 <main class="s-board" id="s-board">
   <section class="s-hero">
     <h1 id="s-title"></h1>
-    
   </section>
   <div class="bento" id="bento"></div>
   <footer class="s-foot"><span id="s-progress"></span></footer>
@@ -30,8 +32,14 @@
 <!-- topic view -->
 <main class="s-topic" id="s-topic" hidden>
   <div class="s-topic-head">
-    <span class="s-kick" id="s-topic-kick"></span>
-    <h1 id="s-topic-title"></h1>
+    <div class="s-topic-lead">
+      <span class="s-kick" id="s-topic-kick"></span>
+      <h1 id="s-topic-title"></h1>
+    </div>
+    <button class="s-topic-home" id="s-topic-home" type="button">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+      Ana sayfa
+    </button>
   </div>
   <div id="s-topic-body"></div>
 </main>
@@ -51,13 +59,15 @@
   <button class="s-chip s-chip-solid" id="s-pen-close">Kapat</button>
 </div>
 
-<script src="data/config.js?v=20260821r"></script>
-<script src="auth.js?v=20260821r"></script>
-<script src="data/content.js?v=20260821r"></script>
-<script src="data/livemap.js?v=20260821r"></script>
-<script src="data/pricing.js?v=20260821r"></script>
-<script src="data/region.js?v=20260821r"></script>
-<script src="data/sunum-content.js?v=20260821r"></script>
-<script src="sunum.js?v=20260821r"></script>
+<script src="data/config.js?v=20260822a"></script>
+<script src="auth.js?v=20260822a"></script>
+<script src="data/content.js?v=20260822a"></script>
+<script src="data/livemap.js?v=20260822a"></script>
+<script src="data/pricing.js?v=20260822a"></script>
+<script src="data/region.js?v=20260822a"></script>
+<script src="data/market.js?v=20260822a"></script>
+<script src="data/story.js?v=20260822a"></script>
+<script src="data/sunum-content.js?v=20260822a"></script>
+<script src="sunum.js?v=20260822a"></script>
 </body>
 </html>

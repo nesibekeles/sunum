@@ -84,9 +84,9 @@ function mountUserChip(user) {
     '<span class="who"><b>' + esc(user.name || user.mail) + "</b>" +
     (user.team ? "<i>" + esc(user.team) + "</i>" : "") + "</span>" +
     '<button type="button" class="out" id="auth-out" title="Çıkış yap">Çıkış</button>';
-  var spacer = bar.querySelector(".s-spacer, .spacer");
-  if (spacer && spacer.nextSibling) bar.insertBefore(chip, spacer.nextSibling);
-  else bar.appendChild(chip);
+  /* Always the last thing in the bar: the person is the rightmost element,
+     the tools (pen, etc.) sit to its left. */
+  bar.appendChild(chip);
   document.getElementById("auth-out").addEventListener("click", function () {
     clearSession();
     location.reload();

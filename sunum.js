@@ -5,7 +5,7 @@
 "use strict";
 
 var C = window.CONTENT, P = window.PRICING, S = window.SUNUM, REG = window.REGION;
-var CFG = window.APP_CONFIG;
+var CFG = window.APP_CONFIG, STORY = window.STORY || {}, MKT = window.MARKET || {};
 
 /* Every picker in the deck runs through these two, so the scope rule lives in
    data/config.js and not in eight separate `.map()` calls. */
@@ -43,6 +43,21 @@ function countUp(scope) {
       if (p >= 1) clearInterval(iv);
     }, 24);
     setTimeout(function () { clearInterval(iv); write(target); }, DUR + 300);
+  });
+}
+function chips(id, items, current, label) {
+  return '<div class="chips" id="' + id + '">' + items.map(function (it) {
+    var v = typeof it === "string" ? it : it.v, t = typeof it === "string" ? it : it.t;
+    return '<button class="chip" data-v="' + esc(v) + '" aria-pressed="' + (v === current) + '">' +
+      esc(label ? label(t) : t) + "</button>";
+  }).join("") + "</div>";
+}
+function bindChips(id, onPick) {
+  $$("#" + id + " .chip").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $$("#" + id + " .chip").forEach(function (o) { o.setAttribute("aria-pressed", o === b); });
+      onPick(b.dataset.v);
+    });
   });
 }
 
@@ -97,6 +112,18 @@ function trackTile(id, title) {
   } catch (e) { /* tracking is best-effort by design */ }
 }
 
+/* ---------------------------------------------------------------- the user */
+/* Who is presenting. `dept` comes from the sheet when it has a Departman
+   column; otherwise the two sales teams count as Satış — that is the rule the
+   business gave ("Satış departmanındaki ekipler: MoS, SAS"). */
+function currentUser() {
+  var u = window.CURRENT_USER || {};
+  var team = (u.team || "").trim();
+  var dept = (u.dept || "").trim();
+  var isSales = dept ? CFG.fold(dept) === "satis" : (team === "MoS" || team === "SAS");
+  return { name: u.name || "", team: team, dept: dept, isSales: isSales };
+}
+
 /* Restrained line icons — 24x24, single stroke, currentColor. */
 var ICONS = {
   rings: '<circle cx="9" cy="15" r="6"/><circle cx="15" cy="9" r="6"/>',
@@ -118,7 +145,8 @@ var ICONS = {
            '<rect x="18" y="13" width="4" height="7" rx="2"/><path d="M20 20a4 4 0 0 1-4 2h-2"/>',
   chart: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M2 20h20"/>',
   cap: '<path d="M2 8.5L12 4l10 4.5L12 13 2 8.5z"/>' +
-       '<path d="M6 10.8V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.2"/>'
+       '<path d="M6 10.8V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.2"/>',
+  home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>'
 };
 function icon(k, size) {
   return '<svg class="ico" width="' + (size || 26) + '" height="' + (size || 26) +
@@ -148,6 +176,7 @@ function renderBoard() {
 /* --------------------------------------------------- open / close transition */
 /* The ghost is decoration only: the topic is rendered and shown regardless, so
    a throttled transition can never leave the deck stuck on a blank screen. */
+var simObserver = null;
 function openTopic(id, fromEl) {
   var tile = S.tiles.filter(function (t) { return t.id === id; })[0];
   if (!tile) return;
@@ -169,8 +198,11 @@ function openTopic(id, fromEl) {
   markSeen(id);
   trackTile(id, tile.t);
   $("#s-board").hidden = true;
-  $("#s-topic").hidden = false;
-  $("#s-home").hidden = false;
+  var topic = $("#s-topic");
+  topic.hidden = false;
+  /* the simulator page gets a one-line, lighter title so the tool itself fits
+     the first screen */
+  topic.classList.toggle("compact", id === "verim");
   $("#s-topic-kick").textContent = tile.d;
   $("#s-topic-title").textContent = tile.t;
   var body = $("#s-topic-body");
@@ -181,8 +213,8 @@ function openTopic(id, fromEl) {
 }
 function goHome() {
   stopMap();
+  if (simObserver) { try { simObserver.disconnect(); } catch (e) {} simObserver = null; }
   $("#s-topic").hidden = true;
-  $("#s-home").hidden = true;
   $("#s-board").hidden = false;
   renderBoard();
   window.scrollTo(0, 0);
@@ -248,24 +280,52 @@ function googleIcon() {
 }
 
 /* --------------------------------------------------------- 2. Instagram */
-/* The four arguments come straight from the "Instagram bana yetiyor" objection
-   card in data/content.js, so the deck and the panel never drift apart on this
-   argument. The hero line is the deck's own: in the objection library the card
-   opens by agreeing with the venue, but here nobody has objected yet, so the
-   page opens on where the search actually starts. `moves` carry inline <b>. */
+/* A short experiment instead of a wall of arguments: the rep asks the venue
+   owner three everyday questions, and each answer unlocks one of the four
+   `moves` on the shared objection card (data/content.js) — so the argument
+   text still lives in one place. Either answer leads to the same insight;
+   the venue is never told it answered wrong. */
 PAGES.instagram = function (el) {
   var O = (C.objections || []).filter(function (o) { return o.id === "instagram"; })[0];
+  var I = S.instagram;
   if (!O) { el.innerHTML = "<div class='panel'><p>İçerik bulunamadı.</p></div>"; return; }
 
   el.innerHTML =
-    '<div class="panel hero-tint"><h2>' + S.instagram.hero + "</h2>" +
-    "<p>" + S.instagram.lead + "</p></div>" +
-    '<div class="grid g2">' + O.moves.map(function (m, i) {
-      return '<div class="panel" style="margin:0"><div class="move-no">' + (i + 1) + "</div>" +
-        '<p style="margin:0">' + m + "</p></div>";
-    }).join("") + "</div>";
-};
+    '<div class="panel hero-tint"><h2>' + esc(I.hero) + "</h2><p>" + esc(I.lead) + "</p></div>" +
+    '<div class="panel"><h2>' + esc(I.expTitle) + "</h2><p>" + esc(I.expLead) + "</p>" +
+    '<div class="exp" id="ig-exp">' + I.questions.map(function (q, i) {
+      return '<div class="exp-q' + (i === 0 ? " on" : "") + '" data-i="' + i + '">' +
+        '<div class="exp-no">' + (i + 1) + "</div>" +
+        '<div class="exp-body"><div class="exp-ask">' + esc(q.q) + "</div>" +
+        '<div class="exp-opts">' + q.a.map(function (a, j) {
+          return '<button class="chip" data-j="' + j + '">' + esc(a) + "</button>";
+        }).join("") + "</div>" +
+        '<div class="exp-reveal" hidden><p class="exp-react"></p>' +
+        '<div class="exp-move">' + O.moves[q.move] + "</div></div></div></div>";
+    }).join("") + "</div>" +
+    '<div class="punch" id="ig-close" hidden>' + esc(I.closing) + "</div></div>";
 
+  $$("#ig-exp .exp-q").forEach(function (qEl) {
+    var i = +qEl.dataset.i, q = I.questions[i];
+    $$(".exp-opts .chip", qEl).forEach(function (b) {
+      b.addEventListener("click", function () {
+        $$(".exp-opts .chip", qEl).forEach(function (o) {
+          o.setAttribute("aria-pressed", o === b); o.disabled = true; });
+        var rv = $(".exp-reveal", qEl);
+        $(".exp-react", rv).textContent = q.react[+b.dataset.j];
+        rv.hidden = false;
+        qEl.classList.add("done");
+        var next = qEl.nextElementSibling;
+        if (next && next.classList.contains("exp-q")) {
+          next.classList.add("on");
+          setTimeout(function () { next.scrollIntoView({ behavior: "smooth", block: "center" }); }, 120);
+        } else {
+          $("#ig-close").hidden = false;
+        }
+      });
+    });
+  });
+};
 
 /* ------------------------------------------------------------ 3. Ortaklık */
 PAGES.ortaklik = function (el) {
@@ -277,52 +337,81 @@ PAGES.ortaklik = function (el) {
 };
 
 /* ------------------------------------------------------------- 4. Simülatör */
-PAGES.verim = function (el) {
-  /* The local export, not the live Apps Script build: /exec needs a dugun.com
-     Google session and Apps Script refuses to be framed unless the script calls
-     setXFrameOptionsMode(ALLOWALL). The local copy also survives a venue with
-     no signal. */
-  el.innerHTML = '<iframe class="simframe tall" id="sim-frame" src="' + C.links.simulatorLocal +
-    '" title="Satış Simülatörü"></iframe>';
+/* The simulator has to read as a page of this deck, not as a box inside it.
+   Same-origin (http/https), the frame is sized to its content and the
+   simulator's own chrome — header, snap-scroll container, scroll hints, dot
+   navigation, footer — is switched off by injected CSS, so there is exactly one
+   scrollbar: the deck's. Off file:// the frame is opaque and the simulator
+   simply keeps its own look; everything still works. */
+var SIM_CSS =
+  "header{display:none!important}:root{--hdr:0px!important}" +
+  "html,body{background:transparent!important;overflow:hidden!important}" +
+  "#page1{min-height:0!important;padding:6px 0 18px!important;align-items:flex-start!important}" +
+  "#page1 .card{max-width:640px!important}" +
+  ".snap{height:auto!important;margin-top:0!important;overflow:visible!important;" +
+  "scroll-snap-type:none!important;scroll-behavior:auto!important}" +
+  ".snap section{min-height:0!important;padding:6px 0 28px!important;scroll-snap-align:none!important}" +
+  ".scrollhint,#dotsNav,#foot,.minibar{display:none!important}";
 
-  /* The deck already put a title on this page, so the simulator's own header is
-     a second one. Hiding it means more than display:none — the simulator's
-     layout offsets itself by --hdr in four places, so zeroing the variable is
-     what actually reclaims the space.
-     Only possible same-origin: opened over http:// this works, opened straight
-     off the disk Chrome treats the frame as an opaque origin and the throw is
-     caught, leaving the simulator's header visible but everything working. */
+PAGES.verim = function (el) {
+  el.innerHTML = '<iframe class="simframe native" id="sim-frame" scrolling="no" src="' +
+    C.links.simulatorLocal + '" title="Satış Simülatörü"></iframe>';
   var f = $("#sim-frame");
+  function fit(d) {
+    var h = Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0);
+    f.style.height = (h + 8) + "px";
+  }
   f.addEventListener("load", function () {
     try {
       var d = f.contentDocument;
       if (!d) return;
       var st = d.createElement("style");
-      st.textContent = "header{display:none!important}:root{--hdr:0px!important}";
+      st.textContent = SIM_CSS;
       d.head.appendChild(st);
-    } catch (e) { /* cross-origin frame — leave the simulator as it is */ }
+      fit(d);
+      if (window.ResizeObserver) {
+        if (simObserver) simObserver.disconnect();
+        simObserver = new ResizeObserver(function () { fit(d); });
+        simObserver.observe(d.body);
+        simObserver.observe(d.documentElement);
+      } else {
+        setInterval(function () { if (document.body.contains(f)) fit(d); }, 600);
+      }
+      /* page switches inside the tool change the height without a resize on
+         the observed nodes in some builds — catch them too */
+      d.addEventListener("click", function () { setTimeout(function () { fit(d); }, 60);
+        setTimeout(function () { fit(d); }, 400); });
+    } catch (e) { f.classList.remove("native"); /* cross-origin frame */ }
   });
 };
 
 /* --------------------------------------------------------------- 5. Rakip */
-var regionState = { city: "İstanbul", cat: "Kır Düğünü", win: "y1", reach: 25, deals: 30 };
+/* Two cards, one selection. Card 1 walks from the official marriage count to
+   the couples on Düğün.com to the couples who asked this category for an
+   offer (MARKET). Card 2 is the segment's own activity over four windows
+   (REGION offers + MARKET provider-page sessions). */
+var regionState = { city: "İstanbul", cat: "Kır Düğünü", win: "y1", period: "y" };
 
 PAGES.rakip = function (el) {
   var R = S.rakip;
-  el.innerHTML = '<div class="panel"><h2>' + esc(R.title) + "</h2><p>" + esc(R.lead) + "</p>" +
+  var cities = cityList(REG.cities);
+  el.innerHTML =
+    '<div class="panel"><h2>' + esc(R.marketTitle) + "</h2><p>" + esc(R.marketLead) + "</p>" +
     '<div class="grid g3" style="margin-top:16px">' +
     "<div><label class='fld'>Şehir</label><select id='rg-city'>" +
-    cityList(REG.cities).map(function (c) {
+    cities.map(function (c) {
       return "<option" + (c === regionState.city ? " selected" : "") + ">" + esc(c) + "</option>";
     }).join("") + "</select></div>" +
     "<div><label class='fld'>Kategori</label><select id='rg-cat'></select></div>" +
-    "<div><label class='fld'>Dönem</label><div class='chips' id='rg-win'>" +
-    REG.windows.map(function (w) {
-      return '<button class="chip" data-k="' + w.k + '" aria-pressed="' + (w.k === regionState.win) +
-        '">' + esc(w.t) + "</button>";
-    }).join("") + "</div></div></div>" +
-    '<div id="rg-out" style="margin-top:20px"></div></div>' +
-    '<div class="panel tint" id="rg-reach"></div>';
+    "<div><label class='fld'>Dönem</label>" +
+    chips("rg-period", [{ v: "y", t: MKT.period ? MKT.period.y : "2026" },
+                        { v: "m", t: "Son 1 ay" }], regionState.period) + "</div></div>" +
+    '<div id="rg-market" style="margin-top:20px"></div></div>' +
+    '<div class="panel"><h2>' + esc(R.title) + "</h2><p>" + esc(R.lead) + "</p>" +
+    "<div style='margin-top:14px'><label class='fld'>Dönem</label>" +
+    chips("rg-win", REG.windows.map(function (w) { return { v: w.k, t: w.t }; }), regionState.win) +
+    "</div>" +
+    '<div id="rg-out" style="margin-top:20px"></div></div>';
   bindRegion();
 };
 
@@ -339,69 +428,62 @@ function bindRegion() {
   }
   fillCats();
   $("#rg-city").addEventListener("change", function () {
-    regionState.city = this.value; fillCats(); drawRegion();
+    regionState.city = this.value; fillCats(); drawMarket(); drawRegion();
   });
-  $("#rg-cat").addEventListener("change", function () { regionState.cat = this.value; drawRegion(); });
-  $$("#rg-win .chip").forEach(function (b) {
-    b.addEventListener("click", function () {
-      regionState.win = b.dataset.k;
-      $$("#rg-win .chip").forEach(function (o) { o.setAttribute("aria-pressed", o === b); });
-      drawRegion();
-    });
-  });
+  $("#rg-cat").addEventListener("change", function () {
+    regionState.cat = this.value; drawMarket(); drawRegion(); });
+  bindChips("rg-period", function (v) { regionState.period = v; drawMarket(); });
+  bindChips("rg-win", function (v) { regionState.win = v; drawRegion(); });
+  drawMarket();
   drawRegion();
+}
+
+function drawMarket() {
+  var out = $("#rg-market");
+  var city = MKT.city && MKT.city[regionState.city];
+  var seg = MKT.seg && MKT.seg[regionState.city + "|" + regionState.cat];
+  if (!city) { out.innerHTML = "<p style='color:var(--mute)'>Bu şehir için evlilik verisi yok.</p>"; return; }
+  var p = regionState.period;
+  var label = p === "y" ? MKT.period.y : MKT.period.m;
+  var marriages = city.marriages[p], share = city.share[p], floored = city.shareRaw[p] < MKT.minShare;
+  var onDc = Math.round(marriages * share);
+  var catCouples = seg ? seg.couples[p] : 0;
+  out.innerHTML = '<div class="funnel3">' +
+    '<div class="f3"><div class="v num" data-count="' + marriages + '">0</div>' +
+    "<div class='l'>evlilik</div><div class='s'>" + esc(regionState.city) + " · " + esc(label) + "</div></div>" +
+    '<div class="f3-arrow">→</div>' +
+    '<div class="f3 hi"><div class="v num" data-count="' + onDc + '">0</div>' +
+    "<div class='l'>çift Düğün.com'da</div><div class='s'>Düğün.com'daki çift oranı " + pct(share, 0) +
+    (floored ? " (varsayım)" : "") + "</div></div>" +
+    '<div class="f3-arrow">→</div>' +
+    '<div class="f3"><div class="v num" data-count="' + catCouples + '">0</div>' +
+    "<div class='l'>çift " + esc(regionState.cat) + " için teklif aldı</div>" +
+    "<div class='s'>düğünü " + esc(label) + "'da olan</div></div></div>" +
+    '<div class="punch" style="margin-top:18px">' + esc(regionState.city) + "'da " + esc(label) +
+    " döneminde <b>" + n(marriages) + "</b> evlilik var; bunların <b>" + n(onDc) +
+    "</b> tanesi Düğün.com'da. " + (catCouples ? "<b>" + n(catCouples) + "</b> çift, " +
+    esc(regionState.cat) + " kategorisinde mekanlardan teklif istedi." : "") + "</div>" +
+    '<div class="note">' + esc(S.rakip.marriageNote) + "</div>";
+  countUp(out);
 }
 
 function drawRegion() {
   var cell = REG.data[regionState.city + "|" + regionState.cat];
-  var out = $("#rg-out"), reach = $("#rg-reach");
+  var seg = MKT.seg && MKT.seg[regionState.city + "|" + regionState.cat];
+  var out = $("#rg-out");
   if (!cell) {
-    out.innerHTML = "<p style='color:var(--mute)'>Bu şehir ve kategori için veri yok.</p>";
-    reach.innerHTML = ""; return;
+    out.innerHTML = "<p style='color:var(--mute)'>Bu şehir ve kategori için veri yok.</p>"; return;
   }
   var w = cell.w[regionState.win];
+  var sessions = seg ? seg.sessions[regionState.win] : null;
   var label = REG.windows.filter(function (x) { return x.k === regionState.win; })[0].t;
-  out.innerHTML = '<div class="grid g4">' +
-    stat(w.views, "Çift ziyareti", label.toLowerCase() + " · sayfa görüntüleme") +
-    stat(w.offers, "Teklif", "çiftin firmalara gönderdiği") +
-    stat(w.weddings, "Tahmini düğün", "bu segmentte gerçekleşen") +
-    stat(w.providers, "Firma", "talebi paylaşan mekan sayısı") + "</div>" +
+  out.innerHTML = '<div class="grid g2">' +
+    stat(sessions == null ? 0 : sessions, "Çift ziyareti", "firma sayfası oturumu") +
+    stat(w.offers, "Teklif", "tüm teklif yöntemleri") + "</div>" +
     '<div class="punch" style="margin-top:18px">' + esc(regionState.city) + " · " +
     esc(regionState.cat) + " segmentinde <b>" + label.toLowerCase() + "</b> " +
-    "<b>" + n(w.views) + "</b> çift ziyareti ve <b>" + n(w.offers) + "</b> teklif oluştu. " +
-    "Bu talebi <b>" + n(w.providers) + "</b> mekan paylaştı — ortalama mekan başına <b>" +
-    n(w.offers / (w.providers || 1)) + " teklif</b>.</div>" +
-    '<div class="note">' + esc(REG.note) + "</div>";
+    "<b>" + n(sessions || 0) + "</b> çift ziyareti ve <b>" + n(w.offers) + "</b> teklif oluştu.</div>";
   countUp(out);
-
-  /* the quarter argument, driven by the same segment's real couple count */
-  var pool = cell.couples12m;
-  var r = regionState.reach / 100;
-  var reached = Math.round(pool * r), missed = pool - reached;
-  var closeRate = reached ? regionState.deals / reached : 0;
-  reach.innerHTML = "<h2>" + esc(S.rakip.reachTitle) + "</h2><p>" + S.rakip.reachText + "</p>" +
-    '<div class="grid g2" style="margin:16px 0">' +
-    "<div><label class='fld'>Bu çiftlerin yüzde kaçına kendi kanallarınızla ulaşıyorsunuz?</label>" +
-    "<input type='number' id='rg-reach-in' min='1' max='100' value='" + regionState.reach + "'></div>" +
-    "<div><label class='fld'>Yılda kaç anlaşma yapıyorsunuz?</label>" +
-    "<input type='number' id='rg-deals-in' min='0' value='" + regionState.deals + "'></div></div>" +
-    '<div class="grid g3">' +
-    stat(pool, "Bölgenizdeki çift", "son 12 ayda Düğün.com'da teklif gönderen") +
-    stat(reached, "Ulaştığınız", "%" + regionState.reach + " varsayımıyla") +
-    stat(missed, "Ulaşamadığınız", "sizi hiç görmeyen çift") + "</div>" +
-    '<div class="punch" style="margin-top:18px">Diyelim ki bölgenizdeki <b>' + n(pool) +
-    "</b> çiftin <b>" + n(reached) + "</b> tanesine ulaşıyorsunuz ve <b>" + n(regionState.deals) +
-    "</b> anlaşma yapıyorsunuz. Aynı oranla, ulaşamadığınız <b>" + n(missed) +
-    "</b> çift <b>" + n(missed * closeRate) + " anlaşma</b> daha demek. " +
-    "Düğün.com'da olmak, tam olarak bu farkı kapatmaktır.</div>" +
-    '<div class="note">' + esc(S.rakip.reachNote) + "</div>";
-  countUp(reach);
-  $("#rg-reach-in").addEventListener("change", function () {
-    regionState.reach = Math.max(1, Math.min(100, +this.value || 25)); drawRegion();
-  });
-  $("#rg-deals-in").addEventListener("change", function () {
-    regionState.deals = Math.max(0, +this.value || 0); drawRegion();
-  });
 }
 function stat(v, l, s, money) {
   return '<div class="stat"><div class="v num" data-count="' + Math.round(v) + '"' +
@@ -410,160 +492,303 @@ function stat(v, l, s, money) {
 }
 
 /* ------------------------------------------------------------------ 6. ROI */
-var roi = { profit: 250000, weddings: 2, city: "İstanbul", cat: "Kır Düğünü", pkg: null, sale: null };
+/* The simulator's ROI card, and nothing else — same model, same formulas.
+   The model is read out of the simulator file itself (the <script id="model">
+   block), so the two can never disagree. The three quality inputs the
+   simulator exposes (profil kalitesi, dönüş süresi, dönüş oranı) stay at the
+   simulator's own defaults here and are not shown. */
+var SIM = null;                 /* parsed model */
+var roi = { city: "İstanbul", grp: "Kır", X: 4, ciro: 350000, kap: 20, fee: null, feeTouched: false };
+var SIM_DEFAULTS = { ps: "Çok İyi", rt: "30 dk", rr: "%100" };
+var GRP_LABEL = { "Kır": "Kır Düğünü", "Balo+Salon": "Düğün Salonu / Balo-Davet",
+  "Söz Nişan": "Söz-Nişan Mekanı", "Diğer Mekan": "Diğer Mekan", "Kına": "Kına / Bekarlığa Veda" };
+var GRPS = ["Kır", "Balo+Salon", "Söz Nişan", "Diğer Mekan", "Kına"];
+
+function loadSim(done) {
+  if (SIM) return done(SIM);
+  fetch(C.links.simulatorLocal).then(function (r) { return r.text(); }).then(function (txt) {
+    var m = txt.match(/<script id="model"[^>]*>([\s\S]*?)<\/script>/);
+    if (!m) throw new Error("model yok");
+    var M = JSON.parse(m[1]);
+    var IDX = {}; M.lookup_cols.forEach(function (c, i) { IDX[c] = i; });
+    var LK = {};
+    M.lookup.forEach(function (r) {
+      LK[[r[IDX.city], r[IDX.grp], r[IDX.X], r[IDX.ps], r[IDX.rt], r[IDX.rr]].join("|")] = r;
+    });
+    SIM = { M: M, IDX: IDX, LK: LK,
+      cities: M.meta.cities, XS: M.meta.X.filter(function (x) { return x !== 3; }) };
+    done(SIM);
+  })["catch"](function () { done(null); });
+}
+/* identical to the simulator's calc(): mult = 1 (no district, no customer,
+   expected scenario) */
+function simCalc(X) {
+  var r = SIM.LK[[roi.city, roi.grp, X, SIM_DEFAULTS.ps, SIM_DEFAULTS.rt, SIM_DEFAULTS.rr].join("|")];
+  if (!r) return null;
+  var I = SIM.IDX, org = r[I.org_month];
+  var orgR = Math.round(org), plusR = Math.round(org * SIM.M.meta.plus_ratio_default);
+  return { org: orgR, plus: plusR, tot: orgR + plusR };
+}
+function simPrice(X) {
+  var p = SIM.M.price_per_x.filter(function (q) {
+    return q.city === roi.city && q.grp === roi.grp && q.X === X; })[0];
+  return p ? p.value_per_x_month * X * 12 : null;
+}
 
 PAGES.roi = function (el) {
-  el.innerHTML = '<div class="panel"><h2>Ne vereceksiniz, ne alacaksınız?</h2>' +
-    "<p>Önce bir düğünün sizin için ne ifade ettiğini konuşalım, sonra rakamı yanına koyalım.</p>" +
-    '<div class="grid g2" style="margin-top:16px">' +
-    "<div><label class='fld'>Bir düğünden ortalama kazancınız (₺)</label>" +
-    "<input type='number' id='r-profit' step='10000' min='0' value='" + roi.profit + "'></div>" +
-    "<div><label class='fld'>Düğün.com'dan yılda kaç düğün beklersiniz?</label>" +
-    "<input type='number' id='r-count' step='1' min='0' value='" + roi.weddings + "'></div></div></div>" +
-    '<div class="panel"><h3>Paket</h3><div class="grid g3" style="margin-top:12px">' +
-    "<div><label class='fld'>Şehir</label><select id='r-city'>" +
-    cityList(P.geo.sahaIller).map(function (c) {
-      return "<option" + (c === roi.city ? " selected" : "") + ">" + esc(c) + "</option>";
-    }).join("") + "</select></div>" +
-    "<div><label class='fld'>Kategori</label><select id='r-cat'>" +
-    catList(P.sas.blocks[0].rows.map(function (r) { return r.category.trim(); })).map(function (c) {
-      return "<option" + (c === roi.cat ? " selected" : "") + ">" + esc(c) + "</option>";
-    }).join("") + "</select></div>" +
-    "<div><label class='fld'>Paket</label><select id='r-pkg'></select></div></div>" +
-    '<div class="grid g2" style="margin-top:14px;align-items:end">' +
-    "<div><label class='fld'>Satış fiyatı (aylık, ₺)</label><input type='number' id='r-sale' step='500'></div>" +
-    "<div><button class='btn' id='r-go'>Hesapla →</button></div></div>" +
-    "<div id='r-note' class='note'></div></div>" +
-    '<div id="r-out"></div>';
-  bindRoi();
+  el.innerHTML = '<div class="panel"><p style="color:var(--mute)">Simülatör modeli yükleniyor…</p></div>';
+  loadSim(function (sim) {
+    if (!sim) {
+      el.innerHTML = '<div class="panel"><p>ROI kartı simülatör modelini okuyamadı. Bu sayfa ' +
+        "bir sunucu üzerinden (https) açıldığında çalışır.</p></div>";
+      return;
+    }
+    if (sim.cities.indexOf(roi.city) < 0) roi.city = sim.cities[0];
+    el.innerHTML =
+      '<div class="panel"><h2>Yatırımın geri dönüşü</h2>' +
+      "<p>Rakamları mekan sahibiyle birlikte doldurun — kapanış oranını o söylesin.</p>" +
+      '<div class="grid g3" style="margin-top:16px">' +
+      "<div><label class='fld'>Şehir</label>" + chips("r-city", sim.cities, roi.city) + "</div>" +
+      "<div><label class='fld'>Kategori</label>" +
+      chips("r-grp", GRPS.map(function (g) { return { v: g, t: GRP_LABEL[g] }; }), roi.grp) + "</div>" +
+      "<div><label class='fld'>Paket</label>" +
+      chips("r-x", sim.XS.map(function (x) { return { v: String(x), t: x + "X" }; }), String(roi.X)) +
+      "</div></div></div>" +
+      '<div class="panel roi-card"><div class="grid g3">' +
+      "<div><label class='fld'>Ortalama düğün cirosu (TL)</label>" +
+      "<input type='number' id='r-ciro' value='" + roi.ciro + "' step='10000' min='0'></div>" +
+      "<div><label class='fld'>100 çiftten kaçını kapatır?</label>" +
+      "<input type='number' id='r-kap' value='" + roi.kap + "' step='5' min='0' max='100'></div>" +
+      "<div><label class='fld'>Yıllık üyelik bedeli (TL) <span class='hint' id='r-hint'></span></label>" +
+      "<input type='number' id='r-fee' step='1000' min='0'></div></div>" +
+      '<div class="roi-out" id="r-out"></div>' +
+      '<div class="punch" id="r-note" style="margin-top:16px"></div></div>';
+    bindChips("r-city", function (v) { roi.city = v; roi.feeTouched = false; drawRoi(); });
+    bindChips("r-grp", function (v) { roi.grp = v; roi.feeTouched = false; drawRoi(); });
+    bindChips("r-x", function (v) { roi.X = +v; roi.feeTouched = false; drawRoi(); });
+    $("#r-ciro").addEventListener("input", function () { roi.ciro = +this.value || 0; drawRoi(); });
+    $("#r-kap").addEventListener("input", function () { roi.kap = +this.value || 0; drawRoi(); });
+    $("#r-fee").addEventListener("input", function () { roi.feeTouched = true; roi.fee = +this.value || 0; drawRoi(); });
+    drawRoi();
+  });
 };
 
-function roiPackages(city, cat) {
-  var out = [];
-  var map = { "İstanbul": "İstanbul", "Ankara": "Ankara", "İzmir": "İzmir", "Bursa": "Bursa",
-    "Adana": "Adana - Antalya - Mersin", "Antalya": "Adana - Antalya - Mersin",
-    "Mersin": "Adana - Antalya - Mersin" };
-  var bl = P.sas.blocks.filter(function (b) { return b.name === (map[city] || "Uydu İller"); })[0];
-  if (bl) {
-    var row = bl.rows.filter(function (r) { return r.category.trim() === cat; })[0];
-    if (row) [["Winner 6X", 0], ["Winner 4X", 1], ["Winner 2X", 2]].forEach(function (w) {
-      if (row.prices[w[1]]) out.push({ name: w[0], term: 12, list: row.prices[w[1]], sale: null });
-    });
-  }
-  var scope = ["İstanbul", "Ankara", "Bursa"].indexOf(city) >= 0 ? city : "Uydu İller";
-  var sc = P.mos.scopes.filter(function (s) { return s.name === scope; })[0];
-  var mb = sc && sc.blocks.filter(function (b) { return b.categories.indexOf(cat) >= 0; })[0];
-  if (mb && mb.list) mb.terms.forEach(function (t) {
-    out.push({ name: t.term, term: t.term.indexOf("12") >= 0 ? 12 : 6,
-               list: mb.list, sale: t.monthly });
-  });
-  return out;
-}
-
-function bindRoi() {
-  function fillPkgs() {
-    var opts = roiPackages(roi.city, roi.cat);
-    $("#r-pkg").innerHTML = opts.length
-      ? opts.map(function (o) { return "<option>" + esc(o.name) + "</option>"; }).join("")
-      : "<option value=''>Fiyat yok</option>";
-    if (!opts.filter(function (o) { return o.name === roi.pkg; }).length) roi.pkg = opts[0] && opts[0].name;
-    if (roi.pkg) $("#r-pkg").value = roi.pkg;
-    syncSale();
-  }
-  function current() {
-    return roiPackages(roi.city, roi.cat).filter(function (o) { return o.name === roi.pkg; })[0] || null;
-  }
-  function syncSale() {
-    var pk = current();
-    if (!pk) { $("#r-note").textContent = ""; return; }
-    roi.sale = pk.sale || pk.list;
-    $("#r-sale").value = Math.round(roi.sale);
-    $("#r-note").innerHTML = "Liste fiyatı <b>" + tl(pk.list) + " / ay</b> · sözleşme süresi <b>" +
-      pk.term + " ay</b>" + (pk.sale ? " · bu paketin satış fiyatı sabittir" : "");
-  }
-  ["city", "cat", "pkg"].forEach(function (k) {
-    $("#r-" + k).addEventListener("change", function () {
-      roi[k] = this.value;
-      if (k !== "pkg") fillPkgs(); else syncSale();
-    });
-  });
-  $("#r-sale").addEventListener("change", function () { roi.sale = Math.max(0, +this.value || 0); });
-  $("#r-profit").addEventListener("change", function () { roi.profit = Math.max(0, +this.value || 0); });
-  $("#r-count").addEventListener("change", function () { roi.weddings = Math.max(0, +this.value || 0); });
-  $("#r-go").addEventListener("click", drawRoi);
-  fillPkgs();
-}
-
 function drawRoi() {
-  var pk = roiPackages(roi.city, roi.cat).filter(function (o) { return o.name === roi.pkg; })[0];
-  var out = $("#r-out");
-  if (!pk) { out.innerHTML = ""; return; }
-  var total = roi.sale * pk.term;
-  var payback = roi.profit ? Math.ceil(total / roi.profit) : null;
-  var gross = roi.profit * roi.weddings;
-  out.innerHTML = '<div class="roi-hero"><div class="grid g3">' +
-    '<div class="roi-cell"><div class="l">Yatırımınız</div><div class="v num" data-money="1" data-count="' +
-    Math.round(total) + '">0</div></div>' +
-    '<div class="roi-cell"><div class="l">' + n(roi.weddings) + " düğünden kazancınız</div>" +
-    '<div class="v num" data-money="1" data-count="' + Math.round(gross) + '">0</div></div>' +
-    '<div class="roi-cell"><div class="l">Geri dönüş</div><div class="v num">' +
-    (total ? n(gross / total, 1) + "×" : "—") + "</div></div></div>" +
-    (payback ? '<div style="margin-top:18px;background:rgba(255,250,240,.16);border-radius:13px;' +
-      'padding:16px 20px;font-size:17px;text-align:center;line-height:1.6"><b>' + n(payback) +
-      " düğün</b> yatırımınızı karşılıyor." +
-      (roi.weddings > payback
-        ? " Beklediğiniz " + n(roi.weddings) + " düğünün kalan <b>" + n(roi.weddings - payback) +
-          " tanesi tamamen kârınız</b>: <b>" + tl((roi.weddings - payback) * roi.profit) + "</b>."
-        : " Bundan sonra aldığınız her düğün tamamen kârınıza kalır.") + "</div>" : "") +
-    "</div>";
-  countUp(out);
-  out.scrollIntoView({ behavior: "smooth", block: "center" });
+  var c = simCalc(roi.X), out = $("#r-out"), note = $("#r-note");
+  if (!out) return;
+  var pf = simPrice(roi.X), feeEl = $("#r-fee");
+  if (!roi.feeTouched) {
+    roi.fee = pf ? Math.round(pf / 1000) * 1000 : 0;
+    feeEl.value = roi.fee || "";
+  }
+  $("#r-hint").textContent = pf ? "ortalama " + tl(pf) : "ortalama yok";
+  if (!c) { out.innerHTML = "<p style='color:var(--mute)'>Bu şehir ve kategori için model yok.</p>"; note.innerHTML = ""; return; }
+  var yl = c.tot * 12, wed = yl * roi.kap / 100, rev = wed * roi.ciro, fee = roi.fee || 0;
+  function tlS(v) { return v >= 1e6 ? n(v / 1e6, 1) + " mn ₺" : tl(v); }
+  out.innerHTML =
+    '<div class="o"><div class="t">Yıllık talep</div><div class="v">' + n(yl) + '</div><div class="s">organik + plus, 12 ay</div></div>' +
+    '<div class="o"><div class="t">Tahmini düğün</div><div class="v">' + n(wed) + '</div><div class="s">yıllık · ' + n(yl) + " × " + roi.kap + "/100</div></div>" +
+    '<div class="o pos"><div class="t">Tahmini ciro</div><div class="v" title="' + esc(tl(rev)) + '">' + tlS(rev) + '</div><div class="s">yıllık · düğün × ciro</div></div>' +
+    '<div class="o big"><div class="t">Üyelik bedelinin</div><div class="v">' + (fee > 0 ? n(rev / fee) + "×" : "—") + '</div><div class="s">katı geri dönüyor</div></div>';
+  note.innerHTML = fee > 0
+    ? "Tek bir düğün üyelik bedelinin <b>" + n(roi.ciro / fee, 1) + " katı</b>; üyeliğin kendini " +
+      "ödemesi için yılda <b>" + n(Math.ceil(fee / (roi.ciro || 1))) + " düğün</b> yeter. Senin " +
+      "söylediğin kapanış oranıyla tahmin <b>" + n(wed) + " düğün</b> — <b>" + n(rev / fee) +
+      " kat</b> geri dönüş."
+    : "Üyelik bedelini girin.";
 }
 
 /* --------------------------------------------------------------- 7. Boş gün */
 PAGES.bosgun = function (el) {
-  var B = S.bosgun;
+  var B = S.bosgun, OF = STORY.ozelFiyat || { providers365: 0, quotes: [] };
   el.innerHTML = '<div class="panel hero-tint"><h2>' + esc(B.title) + "</h2><p>" + esc(B.lead) + "</p></div>" +
     '<div class="panel tint"><h2>' + esc(B.joker.t) + "</h2><p>" + esc(B.joker.d) + "</p></div>" +
-    '<div class="grid g3">' + B.facts.map(function (f) {
-      return '<div class="stat"><div class="v">' + esc(f.v) + '</div><div class="l">' + esc(f.l) +
+    '<div class="grid g3 facts">' + B.facts.map(function (f) {
+      var v = f.count ? '<div class="v num" data-count="' + (OF[f.count] || 0) + '">0</div>'
+                      : '<div class="v">' + esc(f.v) + "</div>";
+      return '<div class="stat">' + v + '<div class="l">' + esc(f.l) +
         '</div><div class="s">' + esc(f.d) + "</div></div>";
     }).join("") + "</div>" +
+    (OF.quotes && OF.quotes.length
+      ? '<div class="panel" style="margin-top:18px"><h3>' + esc(B.quotesTitle) + "</h3><p>" +
+        esc(B.quotesLead) + '</p><div class="quotes">' + OF.quotes.map(function (q) {
+          return '<div class="qt"><p>“' + esc(q.t) + '”</p><div class="who">' + esc(q.cat) +
+            " · " + esc(q.city) + (q.d ? " / " + esc(q.d) : "") + " · " + esc(dateTr(q.date)) + "</div></div>";
+        }).join("") + "</div></div>"
+      : "") +
     '<div class="panel" style="margin-top:18px"><h3>' + esc(B.adsTitle) + "</h3><p>" +
     esc(B.adsLead) + '</p><div class="grid g2" style="margin-top:16px">' +
     B.ads.map(function (a) {
       return '<div><div class="vid portrait"><video src="' + a.f + '" controls ' +
         'preload="metadata" playsinline></video></div>' +
         '<div class="vid-cap" style="text-align:center">' + esc(a.t) + "</div></div>";
-    }).join("") + "</div></div>" +
-    '<div class="panel"><h3>Görüşmede kullanacağınız soru</h3>' +
-    '<div class="punch">“Cumartesi akşamlarınız dolu — peki hafta içi ve gündüz? ' +
-    "O günleri doldurmak için elinizde ne var?”</div>" +
-    repNote(B.repWarn) + "</div>";
+    }).join("") + "</div></div>";
 };
+function dateTr(iso) {
+  var p = String(iso || "").split("-");
+  return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso || "";
+}
 
 /* ---------------------------------------------------------------- 8. Hikâye */
+/* Three sections, one category filter. Section 1 is the presenter's own
+   strongest sales (matched by name tokens to the Qlik seller), section 2 the
+   rest of their team's, section 3 the success-story films. A non-sales user
+   picks a team instead. Cards are anonymous by design: category, place, package,
+   start month and the listing's real numbers — never the name, never a deal
+   count. */
+var storyState = { cat: "*", team: "MoS", open: { mine: true, others: false, stories: false } };
+
+function findMaker(user) {
+  var ut = CFG.fold(user.name).split(" ").filter(function (t) { return t.length > 1; });
+  var best = null;
+  Object.keys(STORY.makers || {}).forEach(function (k) {
+    var m = STORY.makers[k];
+    if (!m.tokens.length) return;
+    var ok = m.tokens.every(function (t) { return ut.indexOf(t) >= 0; });
+    if (ok && (!best || m.tokens.length > best.tokens.length)) best = m;
+  });
+  return best;
+}
+function teamTop(team, cat, exclude, count) {
+  var block = (STORY.teams || {})[team] || {};
+  var list = block[cat] || [];
+  var out = [];
+  list.forEach(function (pair) {
+    if (exclude && pair[1] === exclude) return;
+    if (out.indexOf(pair[0]) < 0) out.push(pair[0]);
+  });
+  return out.slice(0, count);
+}
+function providerCard(pid, i) {
+  var p = (STORY.providers || {})[pid];
+  if (!p) return "";
+  function m(v, l, f) {
+    return '<div class="pm"><div class="pv">' + (v == null ? "—" : f(v)) + '</div><div class="pl">' + esc(l) + "</div></div>";
+  }
+  return '<div class="pcard"><div class="ph"><span class="pno">' + (i + 1) + "</span>" +
+    "<div><b>" + esc(p.cat) + "</b><span>" + esc(p.city) + (p.d ? " / " + esc(p.d) : "") +
+    " · " + esc(p.product || "") + (p.started ? " · " + esc(p.started) + "'dan beri" : "") + "</span></div></div>" +
+    '<div class="pgrid">' +
+    m(p.pvPm, "aylık sayfa görüntüleme", n) +
+    m(p.leadsPm, "aylık teklif", function (v) { return n(v, 1); }) +
+    m(p.leads, "toplam teklif · " + p.months + " ay", n) +
+    m(p.org, "organik teklif", n) +
+    m(p.rr, "dönüş oranı", function (v) { return pct(v, 0); }) +
+    m(p.in1h, "1 saat içinde dönüş", function (v) { return pct(v, 0); }) +
+    m(p.avgH, "ort. dönüş süresi", function (v) { return n(v, 1) + " sa"; }) +
+    m(p.ig, "Instagram'a geçiş", n) +
+    m(p.ps, "profil skoru", function (v) { return n(v * 100, 0) + "/100"; }) +
+    "</div></div>";
+}
+function pickVideos(cat) {
+  var vids = STORY.videos || [], out = [];
+  if (cat && cat !== "*") {
+    var pool = vids.filter(function (v) { return v.cat === cat; });
+    pool = pool.slice().sort(function () { return Math.random() - .5; });
+    out = pool.slice(0, 2);
+  }
+  if (!out.length) {
+    var collage = vids.filter(function (v) { return v.id === STORY.collage; })[0];
+    var venueCats = ["Kır Düğünü", "Düğün Salonları", "Balo ve Davet Salonları"];
+    var latest = vids.filter(function (v) { return venueCats.indexOf(v.cat) >= 0; })
+      .sort(function (a, b) { return (b.pub || "").localeCompare(a.pub || ""); })[0];
+    out = [collage, latest].filter(Boolean);
+  }
+  if (out.length < 2) {
+    vids.forEach(function (v) { if (out.length < 2 && out.indexOf(v) < 0) out.push(v); });
+  }
+  return out;
+}
+
 PAGES.hikaye = function (el) {
-  var H = S.hikaye;
-  var cities = [];
-  C.testimonials.forEach(function (t) { if (cities.indexOf(t.city) < 0) cities.push(t.city); });
-  el.innerHTML = '<div class="panel"><h2>' + esc(H.title) + "</h2><p>" + esc(H.lead) + "</p>" +
-    H.steps.map(function (s) {
-      return '<div class="step-row"><div class="no">' + s.n + "</div><div><h3>" + esc(s.t) +
-        "</h3><p style='margin:6px 0 0;color:var(--ink-2)'>" + esc(s.d) + "</p>" +
-        (s.rep ? repNote(esc(s.rep)) : "") + "</div></div>";
-    }).join("") + "</div>" +
-    '<div class="panel"><h3>Sözü onlara bırakın</h3>' +
-    '<div class="grid g2" style="margin-top:16px">' + H.videos.map(function (v) {
+  var H = S.hikaye, user = currentUser();
+  var maker = user.isSales ? findMaker(user) : null;
+  var cats = ["*"].concat(STORY.cats || []);
+
+  function section(key, title, desc, bodyId) {
+    var open = storyState.open[key];
+    return '<div class="acc' + (open ? " open" : "") + '" data-key="' + key + '">' +
+      '<button class="acc-h" type="button"><span class="acc-t">' + esc(title) + "</span>" +
+      '<span class="acc-ic">' + (open ? "−" : "+") + "</span></button>" +
+      '<div class="acc-b"' + (open ? "" : " hidden") + '><p class="acc-d">' + esc(desc) + "</p>" +
+      '<div id="' + bodyId + '"></div></div></div>';
+  }
+
+  el.innerHTML =
+    '<div class="panel"><h2>' + esc(H.title) + "</h2><p>" + esc(H.lead) + "</p>" +
+    "<div style='margin-top:14px'><label class='fld'>" + esc(H.catLabel) + "</label>" +
+    chips("st-cat", cats.map(function (c) { return { v: c, t: c === "*" ? H.allCats : c }; }), storyState.cat) +
+    "</div></div>" +
+    section("mine", H.mine.t, H.mine.d, "st-mine") +
+    section("others", H.others.t, user.isSales ? H.others.d : H.others.dAll, "st-others") +
+    section("stories", H.stories.t, H.stories.d, "st-stories") +
+    '<div class="note">' + esc(H.metricNote) + "</div>";
+
+  bindChips("st-cat", function (v) { storyState.cat = v; drawStory(user, maker); });
+  $$(".acc-h", el).forEach(function (b) {
+    b.addEventListener("click", function () {
+      var acc = b.parentNode, key = acc.dataset.key, body = $(".acc-b", acc);
+      var open = body.hidden;
+      body.hidden = !open;
+      acc.classList.toggle("open", open);
+      $(".acc-ic", b).textContent = open ? "−" : "+";
+      storyState.open[key] = open;
+    });
+  });
+  drawStory(user, maker);
+};
+
+function drawStory(user, maker) {
+  var H = S.hikaye, cat = storyState.cat;
+  var mineEl = $("#st-mine"), othersEl = $("#st-others"), storiesEl = $("#st-stories");
+  function cards(ids) {
+    return ids.length ? '<div class="grid g2 pcards">' + ids.map(providerCard).join("") + "</div>" : "";
+  }
+
+  /* 1 — mine */
+  if (user.isSales) {
+    var ids = maker ? (maker.ex[cat] || []) : [];
+    if (!maker) {
+      mineEl.innerHTML = '<div class="note" style="margin:0 0 12px">' + esc(H.mine.unknown) + "</div>" +
+        cards(teamTop(user.team || "ALL", cat, null, 2));
+    } else if (!ids.length) {
+      mineEl.innerHTML = '<div class="note" style="margin:0">' + esc(H.mine.empty) + "</div>";
+    } else {
+      mineEl.innerHTML = cards(ids);
+    }
+  } else {
+    mineEl.innerHTML = "<label class='fld'>" + esc(H.mine.teamPick) + "</label>" +
+      chips("st-team", ["MoS", "SAS"], storyState.team) +
+      '<div id="st-team-cards" style="margin-top:14px">' + cards(teamTop(storyState.team, cat, null, 2)) + "</div>";
+    bindChips("st-team", function (v) {
+      storyState.team = v;
+      $("#st-team-cards").innerHTML = cards(teamTop(v, cat, null, 2));
+    });
+  }
+
+  /* 2 — the rest of the team / all teams */
+  if (user.isSales) {
+    var team = user.team === "MoS" || user.team === "SAS" ? user.team : "ALL";
+    othersEl.innerHTML = cards(teamTop(team, cat, maker ? maker.name : null, 2)) ||
+      '<div class="note" style="margin:0">Bu kategoride örnek bulunamadı.</div>';
+  } else {
+    othersEl.innerHTML = cards(teamTop("ALL", cat, null, 2)) ||
+      '<div class="note" style="margin:0">Bu kategoride örnek bulunamadı.</div>';
+  }
+
+  /* 3 — the films */
+  var vids = pickVideos(cat);
+  storiesEl.innerHTML = '<div class="grid g2">' + vids.map(function (v) {
       return '<div><div class="vid"><iframe src="https://www.youtube.com/embed/' + v.id +
-        '" title="' + esc(v.t) + '" allow="accelerometer; clipboard-write; encrypted-media; ' +
+        '" title="' + esc(v.venue) + '" allow="accelerometer; clipboard-write; encrypted-media; ' +
         'picture-in-picture" allowfullscreen loading="lazy"></iframe></div>' +
-        '<div class="vid-cap"><b>' + esc(v.t) + "</b>" + esc(v.d) + "</div></div>";
+        '<div class="vid-cap"><b>' + esc(v.venue) + "</b>" + esc(v.t) +
+        (v.cat && v.cat !== "*" ? " · " + esc(v.cat) : "") + "</div></div>";
     }).join("") + "</div>" +
     '<div class="chips" style="margin-top:16px">' +
-    '<a class="btn ghost" target="_blank" rel="noopener" href="' + C.links.stories + '">Başarı hikâyeleri ↗</a>' +
-    '<a class="btn ghost" target="_blank" rel="noopener" href="' + C.links.youtube + '">YouTube kanalı ↗</a></div></div>';
-};
+    '<a class="btn ghost" target="_blank" rel="noopener" href="' + H.stories.links.stories + '">Başarı hikâyeleri ↗</a>' +
+    '<a class="btn ghost" target="_blank" rel="noopener" href="' + H.stories.links.playlist + '">YouTube oynatma listesi ↗</a></div>';
+}
 
 /* ==================================================================== map */
 /* Two sources, same event shape. data/livemap.js is generated from real
@@ -642,6 +867,7 @@ function loadMapSheet(onDone) {
     if (out.length) { MAP.events = out; if (onDone) onDone(); }
   })["catch"](function () { /* keep the built-in feed */ });
 }
+
 function mapMarkup() {
   var M = C.turkeyMap;
   return '<div class="s-map-wrap"><svg viewBox="' + M.viewBox + '" preserveAspectRatio="xMidYMid meet">' +
@@ -649,6 +875,12 @@ function mapMarkup() {
     '<div class="s-bubs" id="s-bubs"></div></div>';
 }
 function stopMap() { if (mapTimer) { clearInterval(mapTimer); mapTimer = null; } }
+
+/* Several balloons live at once and the whole feed rotates through, the way
+   the map on dugun.com behaves. A new balloon is placed in a city that does
+   not already have one on screen whenever the queue allows, so three
+   İstanbul cards never stack on the same pin. */
+var MAP_LIVE = 3, MAP_EVERY = 2300, MAP_TTL = MAP_LIVE * MAP_EVERY + 600;
 
 function startMap() {
   stopMap();
@@ -685,7 +917,7 @@ function startMap() {
     added = false;
     order.forEach(function (c) { if (byCity[c][round]) { queue.push(byCity[c][round]); added = true; } });
   }
-  var cursor = 0, live = null;
+  var cursor = 0, live = [];
 
   function place(el) {
     var box = el.querySelector(".box");
@@ -704,17 +936,31 @@ function startMap() {
       if (!moved) return;
     }
   }
+  function retire(rec) {
+    rec.el.classList.add("out");
+    setTimeout(function () { if (rec.el.parentNode) rec.el.remove(); }, 400);
+    live = live.filter(function (x) { return x !== rec; });
+  }
+  function nextEvent() {
+    /* prefer a city with no balloon on screen; fall back to plain order */
+    var busy = live.map(function (x) { return x.e.city; });
+    for (var k = 0; k < queue.length; k++) {
+      var e = queue[(cursor + k) % queue.length];
+      if (busy.indexOf(e.city) < 0 || pins.length <= live.length) {
+        cursor = (cursor + k + 1) % queue.length;
+        return e;
+      }
+    }
+    var f = queue[cursor % queue.length]; cursor++; return f;
+  }
   function pop() {
     if (!document.body.contains(host)) { stopMap(); return; }
-    var e = queue[cursor % queue.length]; cursor++;
+    var now = Date.now();
+    live.slice().forEach(function (rec) { if (now - rec.t > MAP_TTL) retire(rec); });
+    while (live.length >= MAP_LIVE) retire(live[0]);
+    var e = nextEvent();
     var p = M.cities[e.city];
     if (!p) return;
-    if (live) {
-      (function (old) {
-        old.classList.add("out");
-        setTimeout(function () { if (old.parentNode) old.remove(); }, 400);
-      })(live);
-    }
     var el = document.createElement("div");
     var xp = p[0] / VW * 100, yp = p[1] / VH * 100;
     el.className = "s-bub " + (e.t === "anlasma" ? "deal " : "") +
@@ -740,13 +986,13 @@ function startMap() {
       if (img.parentNode) img.parentNode.replaceChild(fb, img);
     });
     place(el);
-    live = el;
+    live.push({ el: el, e: e, t: now });
   }
   pop();
-  mapTimer = setInterval(pop, 3200);
+  mapTimer = setInterval(pop, MAP_EVERY);
 }
 
-/* ==================================================================== pen */
+/* ================================================================== pen */
 var Pen = (function () {
   var cv = $("#s-draw"), bar = $("#s-draw-bar"), ctx = null, on = false;
   var col = "#E21B71", w = 3, alpha = 1, straight = false, drawing = false, startY = 0;
@@ -804,6 +1050,9 @@ var Pen = (function () {
     if (ctx) ctx.clearRect(0, 0, cv.width, cv.height);
   });
   $("#s-pen-close").addEventListener("click", function () { toggle(false); });
+  /* The header sits above the canvas (z-index), so the pen button stays
+     clickable while drawing and a second click closes the pen — no trip to
+     the "Kapat" button needed. */
   function toggle(force) {
     on = force == null ? !on : force;
     cv.classList.toggle("on", on);
@@ -815,7 +1064,8 @@ var Pen = (function () {
 })();
 
 /* =================================================================== boot */
-$("#s-home").addEventListener("click", goHome);
+$("#s-topic-home").addEventListener("click", goHome);
+$("#s-logo-home").addEventListener("click", goHome);
 $("#s-pen").addEventListener("click", function () { Pen.toggle(); });
 document.addEventListener("keydown", function (e) {
   var t = e.target.tagName;
@@ -827,5 +1077,4 @@ document.addEventListener("keydown", function (e) {
   }
 });
 renderBoard();
-
 })();

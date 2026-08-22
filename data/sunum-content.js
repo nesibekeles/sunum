@@ -13,7 +13,7 @@ window.SUNUM = {
       d: "Türkiye'de evlenen çiftlerin başladığı yer" },
     { id: "hikaye", w: 4, area: "b", icon: "quote",
       t: "Kendi hikâyeni yarat",
-      d: "Sizden önce başlayanların anlattıkları" },
+      d: "İş ortaklarımızın deneyimleri" },
     { id: "verim", w: 3, area: "c", icon: "trend",
       t: "Maksimum verimi almak sizin elinizde",
       d: "Aynı paketle ne kadar fark yaratılabilir?" },
@@ -44,14 +44,44 @@ window.SUNUM = {
   },
 
   /* The four arguments themselves live on the `instagram` objection card in
-     data/content.js and are shared with the panel's objection library. Only
-     the opening belongs to the deck: here the venue has not objected yet, so
-     the page starts where the couple's search actually starts. */
+     data/content.js and are shared with the panel's objection library. The
+     deck wraps them in a short, conversational experiment: three questions the
+     rep asks the venue owner, each answer unlocking one of the arguments. The
+     question index maps to a `moves` index on the card. */
   instagram: {
-    hero: "Çift araştırmasına Google'da başlar. Google'da da en üstte biz varız.",
+    hero: "Çiftler mekan araştırmalarına Google'da başlar. Google'da da en üstte biz varız.",
     lead: "\"Kır düğünü mekanları\", \"düğün salonu fiyatları\", \"İzmir düğün mekanı\" — " +
       "çift ne yazarsa yazsın, karşısına ilk çıkan sonuçlardan biri Düğün.com. " +
-      "Yani sizi henüz tanımayan çift, sizi ilk burada görüyor."
+      "Yani sizi henüz tanımayan çift, sizi ilk burada görüyor.",
+    expTitle: "Küçük bir deney",
+    expLead: "Üç kısa soru. Cevabı siz verin; biz sadece çiftlerin ne yaptığını gösterelim.",
+    questions: [
+      { q: "Akşam yemeği için yeni bir restoran arıyorsunuz. İlk nereye bakarsınız?",
+        a: ["Google'a yazarım", "Instagram'da ararım"],
+        react: ["Çoğu insan gibi. Çiftler de mekan ararken aynısını yapıyor.",
+                "Olabilir — ama Instagram'da aramak için adını bilmeniz gerekir. " +
+                "Adını bilmediğiniz bir mekanı nerede bulursunuz?"],
+        move: 1 },
+      { q: "Sizi hiç duymamış bir çift, Instagram'da sizi nasıl bulur?",
+        a: ["Keşfet ya da hashtag ile", "Bulamaz — adımı bilmesi gerekir"],
+        react: ["Keşfet, takip ettiği hesaplara benzeyenleri gösterir; sizi arayan çifte değil. " +
+                "Bilinmeyen bir mekan için bu bir piyango.",
+                "Tam olarak bu. Instagram sizi bilenlerin kanalı; sizi arayanların değil."],
+        move: 2 },
+      { q: "Instagram reklamınızı bu ay durdursanız ne olur?",
+        a: ["Trafik aynı kalır", "Trafik biter"],
+        react: ["Reklam trafiği, reklam bütçesiyle başlar ve onunla biter. Denemesi kolay: " +
+                "bir haftalığına durdurun.",
+                "Evet. Reklam bir musluktur; kapattığınız an akış durur."],
+        move: 3 },
+      { q: "Peki Düğün.com sizin için Instagram'ın rakibi mi?",
+        a: ["Rakibi", "Değil"],
+        react: ["Öyle görünebilir — ama profilinizdeki Instagram butonu her gün size çift gönderiyor.",
+                "Değil. Profilinizden Instagram'ınıza geçen her çift, sizin takipçiniz oluyor."],
+        move: 0 }
+    ],
+    closing: "Instagram'ınızı kapatmanızı istemiyoruz. Sizi arayan çiftin ilk baktığı yerde " +
+      "olmanızı istiyoruz — Instagram'ınız da oradan büyür."
   },
 
   ortaklik: {
@@ -78,14 +108,14 @@ window.SUNUM = {
   },
 
   rakip: {
+    marketTitle: "Kaç evlilik oldu, ne kadarı Düğün.com'u kullandı?",
+    marketLead: "Şehir ve kategori seçin. Resmi evlilik sayısından başlayıp Düğün.com'daki " +
+      "çiftlere, oradan sizin kategorinizde teklif alan çiftlere inelim.",
+    marriageNote: "Evlilik sayıları resmi istatistiklerdir (2026 projeksiyon). Düğün.com'daki " +
+      "çift payı, şehirdeki çift tabanımızın evlilik sayısına oranıdır; %50'nin altında kalan " +
+      "şehirlerde ihtiyatlı olmak için %50 varsayılır.",
     title: "Bölgenizde şu an ne oluyor?",
-    lead: "Şehir ve kategori seçin; o segmentte Düğün.com üzerinden gerçekleşen hareketi " +
-      "birlikte okuyalım.",
-    reachTitle: "Peki siz bu çiftlerin kaçına ulaşıyorsunuz?",
-    reachText: "Siz kesinlikle çiftlere ulaşıyorsunuz — referans, geçmiş düğünler, Instagram " +
-      "reklamları. Ama bir firma, bölgesindeki çiftlerin ortalama <b>dörtte birine</b> " +
-      "erişebiliyor. Aşağıdaki oranı kendi durumunuza göre değiştirebilirsiniz.",
-    reachNote: "Erişim oranı bir varsayımdır; çift sayısı ve teklif sayısı gerçek Düğün.com verisidir."
+    lead: "Aynı şehir ve kategoride, Düğün.com üzerinden gerçekleşen hareketi birlikte okuyalım."
   },
 
   bosgun: {
@@ -95,54 +125,66 @@ window.SUNUM = {
     joker: {
       t: "Joker kartımız: Özel Fiyat",
       d: "Belirli tarihler ya da belirli koşullar için özel fiyat tanımlarsınız. Kartınız " +
-         "listede rozetle farklılaşır, çift fiyatı görerek tıklar. Takviminizin boş kalan " +
-         "kısmını doldurmanın en hızlı yolu budur."
+         "listede rozetle farklılaşır, çift fiyatı görerek tıklar; kampanyanızı kendi reklam " +
+         "kanallarımızda da çiftlerin karşısına çıkarırız. Takviminizin boş kalan kısmını " +
+         "doldurmanın en hızlı yolu budur."
     },
+    /* `count` pulls the live figure from STORY.ozelFiyat.providers365 */
     facts: [
-      { v: "%6", l: "daha yüksek tıklanma",
-        d: "Özel Fiyat rozeti taşıyan kartların listede tıklanma oranı, taşımayanlara göre " +
-           "daha yüksek (2026 verisi, ödeyen mekanlar)." },
-      { v: "Siz belirlersiniz", l: "hangi tarih, hangi koşul",
-        d: "Kampanyayı Connect uygulamasından kendiniz tanımlar, onay sonrası yayına alırsınız." },
-      { v: "Anında", l: "yayına alma",
-        d: "İndirim, taksit veya hediye — üç kampanya tipinden birini seçip başlıkla birlikte " +
-           "girersiniz." }
+      { v: "Kontenjanlı", l: "her firmaya açılmaz",
+        d: "Özel Fiyat kontenjanla kullanılır. Gerçekten Düğün.com'a özel, güçlü bir indirim " +
+           "veren firmalara açılır — çiftin gördüğü fiyat gerçekten özel olsun diye." },
+      { v: "Yılda 2 kez", l: "kullanım hakkı",
+        d: "Her firma Özel Fiyat'ı yılda en fazla iki kez kullanabilir. Boş kalan dönemleri " +
+           "hedeflemek için en doğru iki anı birlikte seçeriz." },
+      { count: "providers365", l: "firma",
+        d: "son bir yılda boş günlerini Özel Fiyat sayesinde doldurdu." },
+      { v: "Birebir yönetim", l: "tecrübeli asistan",
+        d: "Ekibimizden çok tecrübeli bir asistan bu süreci sizinle birebir yönetir. " +
+           "Sonuçlarını birlikte takip eder, reklamlarınızı gün gün kontrol eder." },
+      { v: "Ek ücret yok", l: "hizmet pakete dahil",
+        d: "Özel Fiyat ve reklam desteği için ayrıca ücret alınmaz." }
     ],
+    quotesTitle: "İş ortaklarımız ne dedi?",
+    quotesLead: "Portföy yöneticilerimizin görüşme notlarından, olduğu gibi.",
     ads: [
       { f: "assets/video/ozel-fiyat-reklam-1.mp4", t: "Özel Fiyat reklamı" },
       { f: "assets/video/ozel-fiyat-reklam-2.mp4", t: "Özel Fiyat reklamı" }
     ],
     adsTitle: "Özel Fiyat'ı nasıl duyuruyoruz?",
     adsLead: "Kampanyanızı yalnızca listede göstermiyoruz — kendi reklam kanallarımızda da " +
-      "çiftlerin karşısına çıkarıyoruz.",
-    repWarn: "Özel Fiyat kullanan mekanların toplam teklif sayısı ortalamanın altında görünüyor — " +
-      "çünkü kampanyayı genelde talebi düşük mekanlar açıyor. <b>“Özel Fiyat daha çok teklif " +
-      "getirir” demeyin.</b> Savunulabilir olan tek rakam tıklanma oranı; asıl argüman boş " +
-      "günlerin doldurulması."
+      "çiftlerin karşısına çıkarıyoruz."
   },
 
   hikaye: {
     title: "Kendi hikâyeni yarat",
-    lead: "Rakamlar ikna eder, hikâyeler karar verdirir.",
-    steps: [
-      { n: 1, t: "Kendi tecrübenizden bir firma anlatın",
-        d: "Bizzat çalıştığınız, başlangıcını ve bugününü bildiğiniz bir mekan. İsim verin, " +
-           "rakam verin, ne yaptıklarını anlatın.",
-        rep: "Bu kısmı önceden hazırlayın. Görüşmede aklınıza gelen ilk örnek genelde en zayıf olandır." },
-      { n: 2, t: "Duyduğunuz bir hikâyeyi aktarın",
-        d: "Başka bir satış arkadaşınızdan ya da Düğün.com'dan duyduğunuz bir firma. " +
-           "Farklı bir şehir ya da kategori olması iyidir — “sadece İstanbul'da oluyor” " +
-           "algısını kırar.",
-        rep: "Aşağıdaki başarı hikâyelerinden müşterinin kendi şehrine/kategorisine en yakın olanı seçin." },
-      { n: 3, t: "Sözü onlara bırakın",
-        d: "İki kısa video. Sizin söylediğinizi bir başkasının ağzından duymak, aynı cümleyi " +
-           "iki kat güçlendirir.", rep: "" }
-    ],
-    videos: [
-      { id: "P0rjyYfz59w",
-        t: "Çamlıca Köşk", d: "“Düğün.com sayesinde 1 mekandan 8 mekana çıktık!”" },
-      { id: "sjea8hmRwVI",
-        t: "Mutlu iş ortakları", d: "“İşlerinizin ne kadarı Düğün.com'dan geliyor?”" }
-    ]
+    lead: "İş ortaklarımızın deneyimleri.",
+    catLabel: "Kategori",
+    allCats: "Tüm kategoriler",
+    mine: {
+      t: "Benim firmalarım",
+      d: "Son 1 yılda satışını yaptığınız firmalar arasından, seçili kategoride en güçlü " +
+         "sonuçları alan iki sayfa.",
+      teamPick: "Ekip",
+      empty: "Bu kategoride son 1 yılda satışınız bulunmuyor. Başka bir kategori seçin ya da " +
+             "ekip örneklerine bakın.",
+      unknown: "Satış kaydınızla eşleşme bulunamadı — ekip örneklerini gösteriyoruz."
+    },
+    others: {
+      t: "Diğer iş geliştirme yöneticilerinin firmaları",
+      d: "Ekibinizdeki diğer arkadaşlarınızın son 1 yılda sattığı firmalar arasından en " +
+         "güçlü iki örnek. Farklı bir şehir ya da ilçe olması iyidir — “sadece bende oluyor” " +
+         "algısını kırar.",
+      dAll: "Tüm satış ekiplerinin son 1 yılda sattığı firmalar arasından en güçlü iki örnek."
+    },
+    stories: {
+      t: "Düğün.com başarı hikayeleri",
+      d: "İş ortaklarımız Düğün.com ile işlerini büyütme süreçlerini paylaşıyor. " +
+         "Bu hikayeleri dinleyen değil, anlatan kişi olmanız için buradayım.",
+      links: { stories: "https://dugun.com/isortagim/basari-hikayeleri",
+               playlist: "https://www.youtube.com/watch?v=XVGtFubSlgQ&list=PLwBs3owE4E5LsN9awq7h5IV0fXWJUPbN0" }
+    },
+    metricNote: "Rakamlar son 12 ayın gerçek sayfa verisidir; firma adı ve anlaşma sayısı " +
+      "bilinçli olarak gösterilmez."
   }
 };
