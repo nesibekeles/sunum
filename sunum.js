@@ -376,18 +376,20 @@ PAGES.ortaklik = function (el) {
 var SIM_CSS =
   "header{display:none!important}:root{--hdr:0px!important}" +
   "html,body{background:transparent!important;overflow:hidden!important;height:100%!important}" +
-  "#page1{min-height:0!important;height:100vh!important;box-sizing:border-box!important;" +
+  /* #page0 is the access-code screen the 26.08.2026 build added — it gets the
+     same fit-to-frame treatment as the venue screen */
+  "#page0,#page1{min-height:0!important;height:100vh!important;box-sizing:border-box!important;" +
   "overflow:auto!important;align-items:safe center!important;padding:14px 16px 18px!important}" +
   "#foot{display:none!important}" +
   /* A short frame (laptop with the bookmarks bar, 620px screens): the venue
      card tightens its paddings and type so it still fits without a scroll. */
   "@media (max-height:560px){" +
-  "#page1{padding:8px 12px 10px!important}" +
-  "#page1 .card{padding:14px 16px 12px!important;max-width:600px!important}" +
-  "#page1 h2{font-size:16px!important}#page1 .sub{font-size:12px!important;margin-bottom:2px!important}" +
-  "#page1 .lbl{margin:7px 0 4px!important;font-size:11.5px!important}" +
+  "#page0,#page1{padding:8px 12px 10px!important}" +
+  "#page0 .card,#page1 .card{padding:14px 16px 12px!important;max-width:600px!important}" +
+  "#page0 h2,#page1 h2{font-size:16px!important}#page0 .sub,#page1 .sub{font-size:12px!important;margin-bottom:2px!important}" +
+  "#page0 .lbl,#page1 .lbl{margin:7px 0 4px!important;font-size:11.5px!important}" +
   "#page1 .seg{gap:5px!important}#page1 .seg button{padding:6px 7px!important;font-size:12px!important;min-width:48px!important}" +
-  "#page1 select,#page1 input[type=text]{padding:7px 10px!important;font-size:13px!important}" +
+  "#page0 select,#page0 input,#page1 select,#page1 input[type=text]{padding:7px 10px!important;font-size:13px!important}" +
   "#page1 .cust-info{padding:6px 8px!important;font-size:11px!important}" +
   "#startBtn{margin-top:10px!important;padding:10px!important;font-size:14px!important}}";
 
