@@ -502,33 +502,25 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
   50% { box-shadow: 0 10px 24px rgba(226,27,113,.35), 0 0 0 10px rgba(226,27,113,.08); }
 }
 
-/* ------------------------------------------ page-level snap (Boş günler) */
-/* the same rhythm as the simulator: three screens, one snap scrollbar */
-.pagesnap { overflow-y: auto; overflow-x: hidden; scroll-snap-type: y mandatory;
-  scroll-behavior: smooth; }
-.pagesnap section { min-height: 100%; scroll-snap-align: start; scroll-snap-stop: always;
-  display: flex; flex-direction: column; justify-content: center; padding: 4px 2px 14px; }
-.pagesnap .panel { padding: 16px 20px; margin-bottom: 10px; }
-.pagesnap .panel h2 { font-size: 18px; margin-bottom: 4px; }
-.pagesnap .panel h3 { font-size: 15.5px; }
-.pagesnap .panel > p { font-size: 13.5px; margin-bottom: 8px; }
-.pagesnap .punch { font-size: 13.5px; padding: 9px 12px; }
-.pagesnap .fld { font-size: 10.5px; margin-bottom: 3px; }
-.pagesnap input, .pagesnap select { padding: 8px 11px; font-size: 13.5px; }
-.pagesnap .facts .stat { padding: 12px 10px; }
-.pagesnap .facts .stat .v { font-size: 17px; }
-.pagesnap .facts .stat .l { font-size: 11.5px; }
-.pagesnap .facts .stat .s { font-size: 10.5px; margin-top: 3px; }
-.pagesnap .facts .fi { margin-bottom: 3px; }
-.pagesnap .cmp-out .v { font-size: 22px; }
-.pagesnap .cal-count .v { font-size: 26px; }
-.pagesnap .vid.portrait { max-width: 200px; }
+/* ------------------------------------ tight sizing for Boş günler blocks */
+/* normal page scroll; the point of the smaller type and paddings is that each
+   of the page's three blocks fits a single screen on its own */
+.bg-tight .panel { padding: 16px 20px; margin-bottom: 10px; }
+.bg-tight .panel h2 { font-size: 18px; margin-bottom: 4px; }
+.bg-tight .panel h3 { font-size: 15.5px; }
+.bg-tight .panel > p { font-size: 13.5px; margin-bottom: 8px; }
+.bg-tight .punch { font-size: 13.5px; padding: 9px 12px; }
+.bg-tight .fld { font-size: 10.5px; margin-bottom: 3px; }
+.bg-tight input, .bg-tight select { padding: 8px 11px; font-size: 13.5px; }
+.bg-tight .facts .stat { padding: 12px 10px; }
+.bg-tight .facts .stat .v { font-size: 17px; }
+.bg-tight .facts .stat .l { font-size: 11.5px; }
+.bg-tight .facts .stat .s { font-size: 10.5px; margin-top: 3px; }
+.bg-tight .facts .fi { margin-bottom: 3px; }
+.bg-tight .cmp-out .v { font-size: 22px; }
+.bg-tight .cal-count .v { font-size: 26px; }
+.bg-tight .vid.portrait { max-width: 200px; }
 .snap-lead { color: var(--ink-2); font-size: 14px; margin: 0 0 10px; }
-.pagedots { position: fixed; right: 10px; top: 50%; transform: translateY(-50%); z-index: 65;
-  display: flex; flex-direction: column; gap: 8px; }
-.pagedots button { width: 10px; height: 10px; border-radius: 50%; border: 0; cursor: pointer;
-  background: var(--line); padding: 0; transition: background .2s, transform .2s; }
-.pagedots button.on { background: var(--pink); transform: scale(1.25); }
 
 /* money input: ₺ adornment + live thousands grouping */
 .tl-input { position: relative; display: block; }
@@ -536,11 +528,20 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
   font-style: normal; font-weight: 800; color: var(--mute-2); pointer-events: none; }
 .tl-input input { width: 100%; box-sizing: border-box; padding-left: 26px !important; }
 
-/* floating way home while the simulator is full-bleed */
-.s-sim-home { position: fixed; top: calc(var(--top-h) + 10px); right: 14px; z-index: 66; }
+/* floating way home while the simulator is full-bleed — bottom right, clear
+   of the simulator's sticky filter bar at the top and its dot nav mid-right */
+.s-sim-home { position: fixed; bottom: 18px; right: 16px; z-index: 66; }
 
 /* the story page's slim filter bar (the old heading panel is gone) */
 .st-bar { margin-bottom: 16px; }
+/* unmistakably a "load more": plus icon, dashed frame, full width */
+.st-more { width: 100%; margin-top: 12px; display: flex; align-items: center;
+  justify-content: center; gap: 8px; border: 1.5px dashed var(--soft-pink);
+  background: #FFF8FA; color: var(--dark-pink); cursor: pointer; font: inherit;
+  font-size: 14px; font-weight: 800; padding: 12px; border-radius: 13px;
+  transition: all .15s var(--ease); }
+.st-more:hover { border-style: solid; background: #FFE9F1; }
+.st-more svg { flex: 0 0 auto; }
 
 /* --------------------------------------------------- the loss calculator */
 .panel.loss { border: 2px solid var(--coral); background: linear-gradient(180deg, #fff, #FFF6F3); }

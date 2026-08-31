@@ -757,8 +757,6 @@ var FACT_ICONS = ["radar", "calendar", "headset", "check"];
 
 PAGES.bosgun = function (el) {
   var B = S.bosgun, OF = STORY.ozelFiyat || { providers365: 0 };
-  var topic = $("#s-topic");
-  topic.classList.add("compact");
 
   var info = B.facts.filter(function (f) { return !f.count; });
 
@@ -807,34 +805,9 @@ PAGES.bosgun = function (el) {
         '<div class="vid-cap" style="text-align:center">' + esc(a.t) + "</div></div>";
     }).join("") + "</div></div>";
 
-  el.innerHTML =
-    '<div class="pagesnap" id="bg-snap">' +
-    '<section data-s="1">' + sec1 + "</section>" +
-    '<section data-s="2">' + sec2 + "</section>" +
-    '<section data-s="3">' + sec3 + "</section></div>" +
-    '<div class="pagedots" id="bg-dots"><button data-s="1" class="on"></button>' +
-    '<button data-s="2"></button><button data-s="3"></button></div>';
-
-  /* size the snap container to the space under the compact title */
-  var snap = $("#bg-snap");
-  function fitSnap() {
-    if (!document.body.contains(snap)) return;
-    var top = snap.getBoundingClientRect().top + window.scrollY;
-    snap.style.height = Math.max(360, window.innerHeight - top - 8) + "px";
-  }
-  fitSnap();
-  window.addEventListener("resize", fitSnap);
-
-  $$("#bg-dots button").forEach(function (b) {
-    b.addEventListener("click", function () {
-      var sec = $('#bg-snap section[data-s="' + b.dataset.s + '"]');
-      snap.scrollTop = snap.scrollTop + sec.getBoundingClientRect().top - snap.getBoundingClientRect().top;
-    });
-  });
-  snap.addEventListener("scroll", function () {
-    var idx = Math.round(snap.scrollTop / snap.clientHeight) + 1;
-    $$("#bg-dots button").forEach(function (b) { b.classList.toggle("on", +b.dataset.s === idx); });
-  });
+  /* normal page flow — no snapping. The tight sizing exists so each of the
+     three blocks fits one screen on its own as you scroll to it. */
+  el.innerHTML = '<div class="bg-tight">' + sec1 + sec2 + sec3 + "</div>";
 
   function lossCalc() {
     var days = Math.max(0, +$("#bg-days").value || 0);
@@ -998,8 +971,10 @@ function drawStory(user, maker) {
     var slice = ordered.slice(0, count);
     var more = ordered.length > count && count < STORY_MAX;
     return '<div class="grid g2 pcards">' + slice.map(providerCard).join("") + "</div>" +
-      (more ? '<button class="btn ghost st-more" data-sec="' + section + '" style="margin-top:12px">' +
-        esc(H.more) + "</button>" : "");
+      (more ? '<button class="st-more" data-sec="' + section + '">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>' +
+        esc(H.others.more || "Daha fazla göster") + "</button>" : "");
   }
   function bindMore() {
     $$(".st-more", $("#s-topic-body")).forEach(function (b) {
