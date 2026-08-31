@@ -36,7 +36,7 @@ window.SUNUM = {
     googleTitle: "Düğün.com Google'da hep ilk sıralarda",
     googleNote: "Çiftin yazdığı her aramada karşısına çıkıyoruz. Deneyin.",
     mapTitle: "Son 1 haftada neler oldu?",
-    mapInfo: "Bu haritada; Düğün.com üzerinden firmalara ulaşıp teklif isteyen veya " +
+    mapInfo: "Bu haritada; Düğün.com üzerinden firmalara ulaşan veya " +
       "anlaşma sağlayan çiftlerin son 1 haftalık verilerini görmektesiniz."
   },
 
@@ -51,7 +51,7 @@ window.SUNUM = {
       "çift ne yazarsa yazsın, karşısına ilk çıkan sonuçlardan biri Düğün.com. " +
       "Yani sizi henüz tanımayan çift, sizi ilk burada görüyor.",
     expTitle: "Küçük bir deney",
-    expLead: "Üç kısa soru. Cevabı siz verin; biz sadece çiftlerin ne yaptığını gösterelim.",
+    expLead: "Dört kısa soru. Cevabı siz verin; biz sadece çiftlerin ne yaptığını gösterelim.",
     questions: [
       { q: "Akşam yemeği için yeni bir restoran arıyorsunuz. İlk nereye bakarsınız?",
         a: ["Google'a yazarım", "Instagram'da ararım"],
@@ -67,8 +67,7 @@ window.SUNUM = {
         move: 2 },
       { q: "Instagram reklamınızı bu ay durdursanız ne olur?",
         a: ["Trafik aynı kalır", "Trafik biter"],
-        react: ["Reklam trafiği, reklam bütçesiyle başlar ve onunla biter. Denemesi kolay: " +
-                "bir haftalığına durdurun.",
+        react: ["Reklam trafiği, reklam bütçesiyle başlar ve onunla biter.",
                 "Evet. Reklam bir musluktur; kapattığınız an akış durur."],
         move: 3 },
       { q: "Peki Düğün.com sizin için Instagram'ın rakibi mi?",
@@ -79,6 +78,15 @@ window.SUNUM = {
     ],
     closing: "Düğün hazırlığında olan tüm çiftlerin ilk geldiği yer Düğün.com. Mekanınızı " +
       "önceden duymamış olsa bile bütün çiftlerin karşısına çıkarsınız.",
+    /* the Instagram hand-off metric; the raw figure (MARKET.ig.d30) is
+       multiplied by 1.5 at render time — couples who see the handle on the
+       page and search Instagram themselves never press the button */
+    metricTitle: "Düğün.com'dan Instagram'ınıza",
+    metricL: "çift, son 30 günde Düğün.com'daki firma sayfalarından Instagram'a geçti",
+    metricS: "buton tıklamaları ×1,5 — sayfada görüp Instagram'da kendisi aratan çiftler de hesaba katıldı",
+    metricAside: "Bir de sahadan sık duyduğumuz bir şey var: firmalarımız, Düğün.com'a üye " +
+      "olduktan sonra Instagram'dan gelen taleplerin de arttığını söylüyor. Bunu biz ölçmüyoruz — " +
+      "ama bu kadar sık duyunca aktarmadan geçmek istemedik.",
     /* the last word goes to the venue's own couples — an invitation, not a claim */
     askTitle: "En iyi kanıt sizin çiftlerinizde",
     askText: "Bu hafta görüştüğünüz çiftlere sormaktan çekinmeyin: “Düğün.com'u biliyor musunuz? " +
@@ -104,14 +112,14 @@ window.SUNUM = {
       { icon: "cap", t: "Satış eğitimi ve araçlar",
         d: "Gelen talebi anlaşmaya çevirmek için eğitim, Düğün.com Connect uygulaması, kampanya " +
            "araçları ve rakip analizi. Talep gelmesi işin yarısı; kapatmayı da birlikte öğreniyoruz.",
-        proof: "Connect uygulaması ile teklif → randevu → sonuç akışı tek ekranda." }
+        proof: "Connect uygulaması ile gelen çift → randevu → sonuç akışı tek ekranda." }
     ]
   },
 
   rakip: {
     marketTitle: "Kaç evlilik oldu, ne kadarı Düğün.com'u kullandı?",
     marketLead: "Şehir ve kategori seçin. Resmi evlilik sayısından başlayıp Düğün.com'daki " +
-      "çiftlere, oradan sizin kategorinizde teklif alan çiftlere inelim.",
+      "çiftlere, oradan sizin kategorinizi tercih eden çiftlere inelim.",
     marriageNote: "Evlilik sayıları; 2025 TUIK resmi istatistiklerinin, 2026 projeksiyonudur.",
     title: "Bölgenizde şu an ne oluyor?",
     lead: "Aynı şehir ve kategoride, Düğün.com üzerinden gerçekleşen hareketi birlikte okuyalım."
@@ -119,13 +127,12 @@ window.SUNUM = {
 
   bosgun: {
     title: "Boş günleriniz ne olacak?",
-    lead: "Cumartesi akşamı dolu olabilir. Peki hafta içi, gündüz ve pazar günleri? " +
-      "Boş kalan gün, geri gelmeyen gelirdir.",
+    lead: "Cumartesi akşamı dolu olabilir. Peki hafta içi, gündüz ve pazar günleri?",
     /* the loss calculator — the training's "20 × 350.000 = 7 milyon" moment.
        Both numbers are asked to the venue owner; the screen does the maths. */
     loss: {
       t: "Boş günün maliyeti",
-      d: "İki rakamı birlikte dolduralım — hesabı ekran yapsın.",
+      d: "İki rakamı birlikte dolduralım.",
       days: "Yılda kaç gününüz boş geçiyor?",
       value: "Ortalama bir düğünün size getirisi (₺)",
       out: "masada kalan yıllık ciro",
@@ -136,8 +143,14 @@ window.SUNUM = {
     power: {
       t: "Fiyatlama gücü: boş gün, sadece boş gün değildir",
       d: "Mesele yalnızca boş günü doldurmak değil. Talep havuzunuz büyüdükçe, en değerli " +
-         "gününüzü — cumartesiyi — premium fiyata satma özgüvenini kazanırsınız. Bütçesi " +
-         "yetmeyen çifti kaybetmezsiniz; boş cuma ve pazar günlerinize kaydırırsınız.",
+         "gününüzü premium fiyata satma fırsatı kazanırsınız. Bütçesi yetmeyen çifti " +
+         "kaybetmezsiniz; boş cuma ve pazar günlerinize kaydırırsınız.",
+      calc: {
+        days: "Yılda kaç düğün yapıyorsunuz?",
+        value: "Ortalama bir düğünün size getirisi",
+        pct: "Fiyat artışı",
+        out: "ek yıllık ciro"
+      },
       punch: "Boş güne gelen ek talep, cumartesi fiyatınızı yukarı çeken bir kaldıraçtır: " +
          "doluluk arttıkça fiyatı siz belirlersiniz, iskonto yapan taraf olmazsınız."
     },
@@ -169,16 +182,13 @@ window.SUNUM = {
        2026 cohort (n=73). These figures are maintained by hand from that doc —
        they do not come from the panel's own pull. */
     cmp: {
-      t: "Aynı firma, önce ve sonra",
-      d: "Özel Fiyat'ı açan firmalarda, açılıştan önceki ve sonraki 6 haftayı karşılaştırdık " +
-         "(2026'daki 73 kampanya açılışı; mevsim etkisinden arındırılmış).",
+      t: "Özel fiyatın somut faydası",
+      d: "Özel Fiyat'ı açan firmalarda, açılıştan önceki ve sonraki verilerini karşılaştırdık.",
+      count: "firma, son bir yılda boş günlerini Özel Fiyat sayesinde doldurdu.",
       stats: [
-        { v: "+%25", l: "organik teklif / ay", s: "tipik firmada +3–4 teklif" },
+        { v: "+%25", l: "organik ulaşan çift / ay", s: "tipik firmada ayda +3–4 çift" },
         { v: "+%15", l: "sayfa görüntüleme / ay", s: "listede görünme ve tıklama da artıyor" }
-      ],
-      note: "Aynı firmanın kampanya öncesi/sonrası ölçümü; oranlar şehir × kategori × ay " +
-            "mevsim etkisinden arındırılmıştır. Kampanya kapanınca etki ayna görüntüsüyle " +
-            "geri çekiliyor. Kaynak: BI on/off etki analizi, 27.08.2026."
+      ]
     },
     ads: [
       { f: "assets/video/ozel-fiyat-reklam-1.mp4", t: "Özel Fiyat reklamı" },
@@ -196,8 +206,7 @@ window.SUNUM = {
     allCats: "Tüm kategoriler",
     mine: {
       t: "Benim firmalarım",
-      d: "Son 1 yılda satışını yaptığınız firmalar arasından, seçili kategoride en güçlü " +
-         "sonuçları alan iki sayfa.",
+      d: "Son 1 yılda satışını yaptığım firmalar arasından örnekler.",
       teamPick: "Ekip",
       empty: "Bu kategoride son 1 yılda satışınız bulunmuyor. Başka bir kategori seçin ya da " +
              "ekip örneklerine bakın.",
@@ -205,10 +214,9 @@ window.SUNUM = {
     },
     others: {
       t: "Diğer iş geliştirme yöneticilerinin firmaları",
-      d: "Ekibinizdeki diğer arkadaşlarınızın son 1 yılda sattığı firmalar arasından en " +
-         "güçlü iki örnek. Farklı bir şehir ya da ilçe olması iyidir — “sadece bende oluyor” " +
-         "algısını kırar.",
-      dAll: "Tüm satış ekiplerinin son 1 yılda sattığı firmalar arasından en güçlü iki örnek."
+      d: "Ekibimdeki diğer arkadaşlarımın son 1 yılda sattığı firmalar arasından örnekler.",
+      dAll: "Tüm satış ekiplerinin son 1 yılda sattığı firmalar arasından örnekler.",
+      more: "Daha fazla göster"
     },
     stories: {
       t: "Düğün.com başarı hikayeleri",

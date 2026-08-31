@@ -72,6 +72,33 @@ function bindSel(id, onPick) {
   var s = $("#" + id);
   if (s) s.addEventListener("change", function () { onPick(this.value); });
 }
+/* A money input: ₺ adornment, thousands separated live (350000 -> 350.000).
+   Empty until the venue owner types — the training wants the numbers to come
+   from them, not from a prefilled default. */
+function tlInput(id, placeholder) {
+  return '<span class="tl-input"><i>₺</i><input type="text" inputmode="numeric" id="' + id +
+    '" placeholder="' + esc(placeholder || "0") + '" autocomplete="off"></span>';
+}
+function tlVal(id) {
+  var el = $("#" + id);
+  return el ? +(String(el.value).replace(/[^0-9]/g, "") || 0) : 0;
+}
+function bindTl(id, onChange) {
+  var el = $("#" + id);
+  if (!el) return;
+  el.addEventListener("input", function () {
+    var digits = this.value.replace(/[^0-9]/g, "").slice(0, 12);
+    this.value = digits ? NF.format(+digits) : "";
+    if (onChange) onChange();
+  });
+}
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
 
 /* ------------------------------------------------------------------- state */
 /* Progress is per session on purpose: a refresh starts the meeting fresh.
@@ -219,6 +246,7 @@ function openTopic(id, fromEl) {
      leak into the next topic (it hid the title and pushed the cards to the
      window edges on the ROI page) */
   topic.classList.remove("sim-full");
+  $("#s-sim-home").hidden = true;
   $("#s-topic-kick").textContent = tile.d;
   $("#s-topic-title").textContent = tile.t;
   var body = $("#s-topic-body");
@@ -229,6 +257,7 @@ function openTopic(id, fromEl) {
 }
 function goHome() {
   stopMap();
+  $("#s-sim-home").hidden = true;
   if (simObserver) { try { simObserver.disconnect(); } catch (e) {} simObserver = null; }
   $("#s-topic").hidden = true;
   $("#s-topic").classList.remove("sim-full");
@@ -307,8 +336,21 @@ PAGES.instagram = function (el) {
   var I = S.instagram;
   if (!O) { el.innerHTML = "<div class='panel'><p>İçerik bulunamadı.</p></div>"; return; }
 
+  /* the hand-off metric: raw button clicks ×1.5 (couples who see the handle
+     and search Instagram themselves never press the button) */
+  var igRaw = (MKT.ig && MKT.ig.d30) || 0;
+  var igAdj = Math.round(igRaw * 1.5 / 500) * 500;
   el.innerHTML =
     '<div class="panel hero-tint"><h2>' + esc(I.hero) + "</h2><p>" + esc(I.lead) + "</p></div>" +
+    (igAdj ? '<div class="panel tint"><h2>' + esc(I.metricTitle) + "</h2>" +
+      '<div class="cal-count" style="margin-top:6px"><span class="v num" data-count="' + igAdj +
+      '">0</span><span class="l">' + esc(I.metricL) + "</span></div>" +
+      '<div class="note" style="margin-top:6px">' + esc(I.metricS) + "</div>" +
+      '<p style="margin:14px 0 0">' + esc(I.metricAside) + "</p></div>" : "") +
+    '<div class="panel ask"><div class="ask-ic">' +
+    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M4 5h16v10H9l-5 4V5z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg></div>' +
+    "<div><h3>" + esc(I.askTitle) + "</h3><p style='margin:0'>" + esc(I.askText) + "</p></div></div>" +
     '<div class="panel"><h2>' + esc(I.expTitle) + "</h2><p>" + esc(I.expLead) + "</p>" +
     '<div class="exp" id="ig-exp">' + I.questions.map(function (q, i) {
       return '<div class="exp-q' + (i === 0 ? " on" : "") + '" data-i="' + i + '">' +
@@ -320,11 +362,8 @@ PAGES.instagram = function (el) {
         '<div class="exp-reveal" hidden><p class="exp-react"></p>' +
         '<div class="exp-move">' + O.moves[q.move] + "</div></div></div></div>";
     }).join("") + "</div>" +
-    '<div class="punch" id="ig-close" hidden>' + esc(I.closing) + "</div></div>" +
-    '<div class="panel ask"><div class="ask-ic">' +
-    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
-    '<path d="M4 5h16v10H9l-5 4V5z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg></div>' +
-    "<div><h3>" + esc(I.askTitle) + "</h3><p style='margin:0'>" + esc(I.askText) + "</p></div></div>";
+    '<div class="punch" id="ig-close" hidden>' + esc(I.closing) + "</div></div>";
+  countUp(el);
 
   $$("#ig-exp .exp-q").forEach(function (qEl) {
     var i = +qEl.dataset.i, q = I.questions[i];
@@ -375,6 +414,8 @@ PAGES.ortaklik = function (el) {
    second scrollbar onto the screen. */
 var SIM_CSS =
   "header{display:none!important}:root{--hdr:0px!important}" +
+  /* the venue never needs to see which access code is active */
+  ".codeline{display:none!important}" +
   "html,body{background:transparent!important;overflow:hidden!important;height:100%!important}" +
   /* #page0 is the access-code screen the 26.08.2026 build added — it gets the
      same fit-to-frame treatment as the venue screen */
@@ -434,6 +475,8 @@ PAGES.verim = function (el) {
     if (page2 === p2) return;
     page2 = p2;
     topic.classList.toggle("sim-full", p2);
+    var home = $("#s-sim-home");
+    if (home) home.hidden = !p2;
     fit();
   }
   fit();
@@ -455,6 +498,16 @@ PAGES.verim = function (el) {
       var st = doc.createElement("style");
       st.textContent = SIM_CSS;
       doc.head.appendChild(st);
+      /* the disclaimer band: the method line leads in bold, the "no promise"
+         line steps back — injected so BI's monthly rebuild keeps working */
+      $$(".warnband", doc).forEach(function (w) {
+        var span = w.querySelector("span:last-child");
+        if (span) span.innerHTML =
+          "Benzer mekanların gerçekleşen verisinden hesaplanır. Sonuçlar mekanın profiline " +
+          "eklediği fotoğraf kalitesi, kampanya çıkıp çıkmadığı, kendisine ulaşan çiftlere " +
+          "ne kadar sürede geri döndüğü gibi çeşitli metriklere göre değişir." +
+          "<small>Tüm rakamlar tahmini ortalamalardır — taahhüt değildir.</small>";
+      });
       /* the simulator flips page1/page2 by inline display — watch for it */
       var p2 = doc.getElementById("page2");
       new doc.defaultView.MutationObserver(function () {
@@ -633,11 +686,15 @@ function drawRegion() {
       "</div><div class='s'>" + esc(winLabel) + "</div></div></div>";
   }
 
-  out.innerHTML = funnel("Çift ziyareti", "sessions") + funnel("Teklif", "offers") +
+  out.innerHTML = funnel("Düğün.com trafiği", "sessions") + funnel("Ulaşan çift", "offers") +
     '<div class="punch" style="margin-top:18px">' + esc(regionState.city) + " · " +
     esc(regionState.cat) + " segmentinde <b>" + esc(winLabel) + "</b> döneminde <b>" +
-    n(winVal(seg.sessions, regionState.win, cym)) + "</b> çift ziyareti ve <b>" +
-    n(winVal(seg.offers, regionState.win, cym)) + "</b> teklif oluştu.</div>";
+    n(winVal(seg.sessions, regionState.win, cym)) + "</b> Düğün.com ziyareti oldu, <b>" +
+    n(winVal(seg.offers, regionState.win, cym)) + "</b> çift firmalarla iletişime geçti.</div>" +
+    '<div class="panel ask" style="margin-top:18px"><div class="ask-ic">' +
+    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M4 5h16v10H9l-5 4V5z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg></div>' +
+    "<div><h3>" + esc(S.instagram.askTitle) + "</h3><p style='margin:0'>" + esc(S.instagram.askText) + "</p></div></div>";
   countUp(out);
 }
 function stat(v, l, s, money) {
@@ -692,69 +749,117 @@ function bindCalendar(CAL) {
   });
 }
 
-/* Order on the page: joker card → four feature cards → the 846 tile beside
-   the with/without comparison → the ad films. The comparison is within-firm
-   (same venues, campaign period vs. no-campaign period, firms whose campaign
-   is over so both periods are complete) and reported as extra visits, not a
-   percentage. */
+/* Three screens, one snap scrollbar — the same rhythm as the simulator:
+   1) the cost of an empty day + pricing power (both calculators start EMPTY,
+      the venue owner's own numbers drive them), 2) the Özel Fiyat card with
+   its facts and measured benefit, 3) the ad films. */
+var FACT_ICONS = ["radar", "calendar", "headset", "check"];
+
 PAGES.bosgun = function (el) {
-  var B = S.bosgun, OF = STORY.ozelFiyat || { providers365: 0 }, CP = OF.compare;
+  var B = S.bosgun, OF = STORY.ozelFiyat || { providers365: 0 };
+  var topic = $("#s-topic");
+  topic.classList.add("compact");
+
   var info = B.facts.filter(function (f) { return !f.count; });
-  var hero = B.facts.filter(function (f) { return f.count; })[0];
 
-  /* BI's on/off event study — figures maintained in sunum-content.js from
-     docs/OZEL_FIYAT_ONOFF_RESULTS.md, not computed by the panel */
-  var compareHtml =
-    '<div class="panel cmp"><h3>' + esc(B.cmp.t) + "</h3><p>" + esc(B.cmp.d) + "</p>" +
-    '<div class="cmp-out">' + B.cmp.stats.map(function (st) {
-      return '<div><div class="v">' + esc(st.v) + '</div><div class="l">' + esc(st.l) +
-        (st.s ? '</div><div class="l" style="color:var(--mute-2)">' + esc(st.s) : "") + "</div></div>";
-    }).join("") + "</div>" +
-    '<div class="note">' + esc(B.cmp.note) + "</div></div>";
-
-  el.innerHTML = '<div class="panel hero-tint"><h2>' + esc(B.title) + "</h2><p>" + esc(B.lead) + "</p></div>" +
-    /* the training's case-study moment: the venue owner's own two numbers,
-       multiplied in front of them */
+  var sec1 =
+    '<p class="snap-lead">' + esc(B.lead) + "</p>" +
     '<div class="panel loss"><h2>' + esc(B.loss.t) + "</h2><p>" + esc(B.loss.d) + "</p>" +
-    '<div class="grid g3" style="margin-top:14px;align-items:end">' +
+    '<div class="grid g3" style="margin-top:10px;align-items:end">' +
     "<div><label class='fld'>" + esc(B.loss.days) + "</label>" +
-    "<input type='number' id='bg-days' value='20' min='0' step='1'></div>" +
-    "<div><label class='fld'>" + esc(B.loss.value) + "</label>" +
-    "<input type='number' id='bg-value' value='350000' min='0' step='10000'></div>" +
+    "<input type='number' id='bg-days' placeholder='örn. 20' min='0' step='1'></div>" +
+    "<div><label class='fld'>" + esc(B.loss.value) + "</label>" + tlInput("bg-value", "örn. 350.000") + "</div>" +
     '<div class="loss-out"><div class="v num" id="bg-sum">—</div><div class="l">' +
     esc(B.loss.out) + "</div></div></div>" +
-    '<div class="punch" id="bg-punch" style="margin-top:14px"></div></div>' +
+    '<div class="punch" id="bg-punch" hidden style="margin-top:12px"></div></div>' +
     '<div class="panel"><h2>' + esc(B.power.t) + "</h2><p>" + esc(B.power.d) + "</p>" +
-    '<div class="punch">' + esc(B.power.punch) + "</div></div>" +
+    '<div class="grid g4" style="margin-top:10px;align-items:end">' +
+    "<div><label class='fld'>" + esc(B.power.calc.days) + "</label>" +
+    "<input type='number' id='pw-days' placeholder='örn. 40' min='0' step='1'></div>" +
+    "<div><label class='fld'>" + esc(B.power.calc.value) + "</label>" + tlInput("pw-value", "örn. 350.000") + "</div>" +
+    "<div><label class='fld'>" + esc(B.power.calc.pct) + "</label>" +
+    sel("pw-pct", [{ v: "5", t: "%5" }, { v: "10", t: "%10" }, { v: "15", t: "%15" }], "10") + "</div>" +
+    '<div class="loss-out"><div class="v num" id="pw-sum">—</div><div class="l">' +
+    esc(B.power.calc.out) + "</div></div></div>" +
+    '<div class="punch" style="margin-top:12px">' + esc(B.power.punch) + "</div></div>";
+
+  var sec2 =
     '<div class="panel tint"><h2>' + esc(B.joker.t) + "</h2><p>" + esc(B.joker.d) + "</p></div>" +
     '<div class="grid g4 facts">' + info.map(function (f, i) {
-      return '<div class="stat"><div class="fi">' + icon(FACT_ICONS[i % FACT_ICONS.length], 26) + "</div>" +
+      return '<div class="stat"><div class="fi">' + icon(FACT_ICONS[i % FACT_ICONS.length], 22) + "</div>" +
         '<div class="v">' + esc(f.v) + '</div><div class="l">' + esc(f.l) +
         '</div><div class="s">' + esc(f.d) + "</div></div>";
     }).join("") + "</div>" +
-    '<div class="grid g2 cmp-wrap" style="margin-top:18px">' +
-    (hero ? '<div class="stat hero facts"><div class="fi">' + icon("trend", 30) + "</div>" +
-      '<div class="v num" data-count="' + (OF[hero.count] || 0) + '">0</div><div class="l">' + esc(hero.l) +
-      '</div><div class="s">' + esc(hero.d) + "</div></div>" : "") +
-    compareHtml + "</div>" +
-    '<div class="panel" style="margin-top:18px"><h3>' + esc(B.adsTitle) + "</h3><p>" +
-    esc(B.adsLead) + '</p><div class="grid g2" style="margin-top:16px">' +
+    '<div class="panel cmp" style="margin-top:12px"><h3>' + esc(B.cmp.t) + "</h3><p>" + esc(B.cmp.d) + "</p>" +
+    '<div class="cal-count" style="margin:4px 0 8px"><span class="v num" data-count="' + (OF.providers365 || 0) +
+    '">0</span><span class="l">' + esc(B.cmp.count) + "</span></div>" +
+    '<div class="cmp-out">' + B.cmp.stats.map(function (st) {
+      return '<div><div class="v">' + esc(st.v) + '</div><div class="l">' + esc(st.l) +
+        (st.s ? '</div><div class="l" style="color:var(--mute-2)">' + esc(st.s) : "") + "</div></div>";
+    }).join("") + "</div></div>";
+
+  var sec3 =
+    '<div class="panel"><h3>' + esc(B.adsTitle) + "</h3><p>" + esc(B.adsLead) + "</p>" +
+    '<div class="grid g2" style="margin-top:12px">' +
     B.ads.map(function (a) {
       return '<div><div class="vid portrait"><video src="' + a.f + '" controls ' +
         'preload="metadata" playsinline></video></div>' +
         '<div class="vid-cap" style="text-align:center">' + esc(a.t) + "</div></div>";
     }).join("") + "</div></div>";
+
+  el.innerHTML =
+    '<div class="pagesnap" id="bg-snap">' +
+    '<section data-s="1">' + sec1 + "</section>" +
+    '<section data-s="2">' + sec2 + "</section>" +
+    '<section data-s="3">' + sec3 + "</section></div>" +
+    '<div class="pagedots" id="bg-dots"><button data-s="1" class="on"></button>' +
+    '<button data-s="2"></button><button data-s="3"></button></div>';
+
+  /* size the snap container to the space under the compact title */
+  var snap = $("#bg-snap");
+  function fitSnap() {
+    if (!document.body.contains(snap)) return;
+    var top = snap.getBoundingClientRect().top + window.scrollY;
+    snap.style.height = Math.max(360, window.innerHeight - top - 8) + "px";
+  }
+  fitSnap();
+  window.addEventListener("resize", fitSnap);
+
+  $$("#bg-dots button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var sec = $('#bg-snap section[data-s="' + b.dataset.s + '"]');
+      snap.scrollTop = snap.scrollTop + sec.getBoundingClientRect().top - snap.getBoundingClientRect().top;
+    });
+  });
+  snap.addEventListener("scroll", function () {
+    var idx = Math.round(snap.scrollTop / snap.clientHeight) + 1;
+    $$("#bg-dots button").forEach(function (b) { b.classList.toggle("on", +b.dataset.s === idx); });
+  });
+
   function lossCalc() {
     var days = Math.max(0, +$("#bg-days").value || 0);
-    var val = Math.max(0, +$("#bg-value").value || 0);
-    var sum = days * val;
-    $("#bg-sum").textContent = tl(sum);
-    $("#bg-punch").innerHTML = B.loss.punch.replace("{sum}", tl(sum));
+    var val = tlVal("bg-value");
+    var ok = days > 0 && val > 0;
+    $("#bg-sum").textContent = ok ? tl(days * val) : "—";
+    $("#bg-punch").hidden = !ok;
+    if (ok) $("#bg-punch").innerHTML = B.loss.punch.replace("{sum}", tl(days * val));
   }
   $("#bg-days").addEventListener("input", lossCalc);
-  $("#bg-value").addEventListener("input", lossCalc);
-  lossCalc();
+  bindTl("bg-value", lossCalc);
+
+  function powerCalc() {
+    var days = Math.max(0, +$("#pw-days").value || 0);
+    var val = tlVal("pw-value");
+    var pct = +($("#pw-pct").value || 10);
+    var ok = days > 0 && val > 0;
+    $("#pw-sum").textContent = ok ? tl(days * val * pct / 100) : "—";
+  }
+  $("#pw-days").addEventListener("input", powerCalc);
+  bindTl("pw-value", powerCalc);
+  bindSel("pw-pct", powerCalc);
+  countUp(el);
 };
+
 function dateTr(iso) {
   var p = String(iso || "").split("-");
   return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso || "";
@@ -767,7 +872,16 @@ function dateTr(iso) {
    picks a team instead. Cards are anonymous by design: category, place, package,
    start month and the listing's real numbers — never the name, never a deal
    count. */
-var storyState = { cat: "*", team: "MoS", open: { mine: true, others: false, stories: false } };
+var storyState = { cat: "*", team: "MoS", open: { mine: true, others: false, stories: false },
+  shown: { mine: 2, others: 2 }, order: {} };
+var STORY_STEP = 2, STORY_MAX = 6;
+/* stable-per-visit random order over the qualifying (top-30%) pool */
+function storyOrder(key, ids) {
+  if (!storyState.order[key] || storyState.order[key].base !== ids.join(",")) {
+    storyState.order[key] = { base: ids.join(","), ids: shuffle(ids) };
+  }
+  return storyState.order[key].ids;
+}
 
 function findMaker(user) {
   var ut = CFG.fold(user.name).split(" ").filter(function (t) { return t.length > 1; });
@@ -780,7 +894,7 @@ function findMaker(user) {
   });
   return best;
 }
-function teamTop(team, cat, exclude, count) {
+function teamPool(team, cat, exclude) {
   var block = (STORY.teams || {})[team] || {};
   var list = block[cat] || [];
   var out = [];
@@ -788,7 +902,7 @@ function teamTop(team, cat, exclude, count) {
     if (exclude && pair[1] === exclude) return;
     if (out.indexOf(pair[0]) < 0) out.push(pair[0]);
   });
-  return out.slice(0, count);
+  return out;
 }
 function providerCard(pid, i) {
   var p = (STORY.providers || {})[pid];
@@ -799,16 +913,16 @@ function providerCard(pid, i) {
   return '<div class="pcard"><div class="ph"><span class="pno">' + (i + 1) + "</span>" +
     "<div>" + (p.name ? '<span class="pname" aria-hidden="true">' + esc(p.name) + "</span>" : "") +
     "<b>" + esc(p.cat) + "</b><span>" + esc(p.city) + (p.d ? " / " + esc(p.d) : "") +
-    " · " + esc(p.product || "") + (p.started ? " · " + esc(p.started) + "'dan beri" : "") + "</span></div></div>" +
+    " · " + esc(p.product || "") + (p.started ? " · başlangıç " + esc(p.started) : "") + "</span></div></div>" +
     '<div class="pgrid">' +
-    m(p.pvPm, "aylık sayfa görüntüleme", n) +
-    m(p.leadsPm, "aylık teklif", function (v) { return n(v, 1); }) +
-    m(p.leads, "toplam teklif · " + p.months + " ay", n) +
-    m(p.org, "organik teklif", n) +
+    m(p.pvPm, "aylık ortalama sayfa görüntüleme", n) +
+    m(p.leadsPm, "aylık ortalama ulaşan çift", function (v) { return n(v, 1); }) +
+    m(p.leadsPm == null ? null : Math.round(p.leadsPm * 12), "1 yılda beklenen ulaşan çift", n) +
+    m(p.orgPm, "aylık ortalama organik ulaşan çift", function (v) { return n(v, 1); }) +
     m(p.rr, "dönüş oranı", function (v) { return pct(v, 0); }) +
     m(p.in1h, "1 saat içinde dönüş", function (v) { return pct(v, 0); }) +
     m(p.avgH, "ort. dönüş süresi", function (v) { return n(v, 1) + " sa"; }) +
-    m(p.ig, "Instagram'a geçiş", n) +
+    m(p.igPm, "Instagram'a geçiş / ay", n) +
     m(p.ps, "profil skoru", function (v) { return n(v * 100, 0) + "/100"; }) +
     "</div></div>";
 }
@@ -847,16 +961,19 @@ PAGES.hikaye = function (el) {
   }
 
   el.innerHTML =
-    '<div class="panel"><h2>' + esc(H.title) + "</h2><p>" + esc(H.lead) + "</p>" +
-    "<div class='grid g3' style='margin-top:14px'><div><label class='fld'>" + esc(H.catLabel) + "</label>" +
+    "<div class='grid g3 st-bar'><div><label class='fld'>" + esc(H.catLabel) + "</label>" +
     sel("st-cat", cats.map(function (c) { return { v: c, t: c === "*" ? H.allCats : c }; }), storyState.cat) +
-    "</div></div></div>" +
+    "</div></div>" +
     section("mine", H.mine.t, H.mine.d, "st-mine") +
     section("others", H.others.t, user.isSales ? H.others.d : H.others.dAll, "st-others") +
     section("stories", H.stories.t, H.stories.d, "st-stories") +
     '<div class="note">' + esc(H.metricNote) + "</div>";
 
-  bindSel("st-cat", function (v) { storyState.cat = v; drawStory(user, maker); });
+  bindSel("st-cat", function (v) {
+    storyState.cat = v;
+    storyState.shown = { mine: STORY_STEP, others: STORY_STEP };
+    drawStory(user, maker);
+  });
   $$(".acc-h", el).forEach(function (b) {
     b.addEventListener("click", function () {
       var acc = b.parentNode, key = acc.dataset.key, body = $(".acc-b", acc);
@@ -873,8 +990,25 @@ PAGES.hikaye = function (el) {
 function drawStory(user, maker) {
   var H = S.hikaye, cat = storyState.cat;
   var mineEl = $("#st-mine"), othersEl = $("#st-others"), storiesEl = $("#st-stories");
-  function cards(ids) {
-    return ids.length ? '<div class="grid g2 pcards">' + ids.map(providerCard).join("") + "</div>" : "";
+  /* the pool is the top-30% band; show a shuffled slice, "Daha fazla göster"
+     grows it two at a time up to six */
+  function paged(key, ids, section) {
+    var ordered = storyOrder(key, ids);
+    var count = Math.min(storyState.shown[section] || STORY_STEP, STORY_MAX, ordered.length);
+    var slice = ordered.slice(0, count);
+    var more = ordered.length > count && count < STORY_MAX;
+    return '<div class="grid g2 pcards">' + slice.map(providerCard).join("") + "</div>" +
+      (more ? '<button class="btn ghost st-more" data-sec="' + section + '" style="margin-top:12px">' +
+        esc(H.more) + "</button>" : "");
+  }
+  function bindMore() {
+    $$(".st-more", $("#s-topic-body")).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var sec = b.dataset.sec;
+        storyState.shown[sec] = Math.min(STORY_MAX, (storyState.shown[sec] || STORY_STEP) + STORY_STEP);
+        drawStory(user, maker);
+      });
+    });
   }
 
   /* 1 — mine */
@@ -882,31 +1016,32 @@ function drawStory(user, maker) {
     var ids = maker ? (maker.ex[cat] || []) : [];
     if (!maker) {
       mineEl.innerHTML = '<div class="note" style="margin:0 0 12px">' + esc(H.mine.unknown) + "</div>" +
-        cards(teamTop(user.team || "ALL", cat, null, 2));
+        paged("mine-team", teamPool(user.team || "ALL", cat, null), "mine");
     } else if (!ids.length) {
       mineEl.innerHTML = '<div class="note" style="margin:0">' + esc(H.mine.empty) + "</div>";
     } else {
-      mineEl.innerHTML = cards(ids);
+      mineEl.innerHTML = paged("mine-" + maker.name, ids, "mine");
     }
   } else {
     mineEl.innerHTML = "<div class='grid g3'><div><label class='fld'>" + esc(H.mine.teamPick) + "</label>" +
-      sel("st-team", ["MoS", "SAS"], storyState.team) + "</div></div>" +
-      '<div id="st-team-cards" style="margin-top:14px">' + cards(teamTop(storyState.team, cat, null, 2)) + "</div>";
+      sel("st-team", [{ v: "MoS", t: "Yeni Satış" }, { v: "SAS", t: "Yenileme" }], storyState.team) + "</div></div>" +
+      '<div id="st-team-cards" style="margin-top:14px">' +
+      paged("team-" + storyState.team, teamPool(storyState.team, cat, null), "mine") + "</div>";
     bindSel("st-team", function (v) {
       storyState.team = v;
-      $("#st-team-cards").innerHTML = cards(teamTop(v, cat, null, 2));
+      storyState.shown.mine = STORY_STEP;
+      drawStory(user, maker);
     });
   }
 
   /* 2 — the rest of the team / all teams */
-  if (user.isSales) {
-    var team = user.team === "MoS" || user.team === "SAS" ? user.team : "ALL";
-    othersEl.innerHTML = cards(teamTop(team, cat, maker ? maker.name : null, 2)) ||
-      '<div class="note" style="margin:0">Bu kategoride örnek bulunamadı.</div>';
-  } else {
-    othersEl.innerHTML = cards(teamTop("ALL", cat, null, 2)) ||
-      '<div class="note" style="margin:0">Bu kategoride örnek bulunamadı.</div>';
-  }
+  var pool2 = user.isSales
+    ? teamPool(user.team === "MoS" || user.team === "SAS" ? user.team : "ALL", cat, maker ? maker.name : null)
+    : teamPool("ALL", cat, null);
+  othersEl.innerHTML = pool2.length
+    ? paged("others", pool2, "others")
+    : '<div class="note" style="margin:0">Bu kategoride örnek bulunamadı.</div>';
+  bindMore();
 
   /* 3 — the films */
   var vids = pickVideos(cat);
@@ -933,7 +1068,7 @@ var MAP = (function () {
   var raw = (window.LIVEMAP && window.LIVEMAP.events) || [];
   return {
     labels: (window.LIVEMAP && window.LIVEMAP.labels) ||
-            { teklif: "adlı çift teklif istedi", anlasma: "adlı çift ile anlaşma yapıldı!" },
+            { teklif: "adlı çift iletişime geçti", anlasma: "adlı çift ile anlaşma yapıldı!" },
     events: raw.filter(function (e) { return CFG.cityAllowed(e.city) && CFG.catAllowed(e.cat); })
   };
 })();
@@ -1202,6 +1337,7 @@ var Pen = (function () {
 
 /* =================================================================== boot */
 $("#s-topic-home").addEventListener("click", goHome);
+$("#s-sim-home").addEventListener("click", goHome);
 $("#s-logo-home").addEventListener("click", goHome);
 $("#s-pen").addEventListener("click", function () { Pen.toggle(); });
 document.addEventListener("keydown", function (e) {

@@ -81,8 +81,7 @@ function mountUserChip(user) {
   var initials = (user.name || user.mail || "?").trim().split(/\s+/)
     .slice(0, 2).map(function (w) { return w.charAt(0); }).join("").toUpperCase();
   chip.innerHTML = '<span class="av">' + esc(initials) + "</span>" +
-    '<span class="who"><b>' + esc(user.name || user.mail) + "</b>" +
-    (user.team ? "<i>" + esc(user.team) + "</i>" : "") + "</span>" +
+    '<span class="who"><b>' + esc(user.name || user.mail) + "</b></span>" +
     '<button type="button" class="out" id="auth-out" title="Çıkış yap">Çıkış</button>';
   /* Always the last thing in the bar: the person is the rightmost element,
      the tools (pen, etc.) sit to its left. */
