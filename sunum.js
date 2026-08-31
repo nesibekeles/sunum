@@ -482,9 +482,31 @@ PAGES.verim = function (el) {
 
 /* --------------------------------------------------------------- 5. Rakip */
 /* Two cards, one selection. Card 1 walks from the official marriage count to
-   the couples on Düğün.com to the couples who asked this category for an
-   offer (MARKET). Card 2 is the segment's own activity over four windows
-   (REGION offers + MARKET provider-page sessions). */
+   the couples on Düğün.com (the static 2025 share, floored at 66%) to the
+   couples who picked this category. Card 2 is two three-step funnels —
+   Türkiye → il → il+kategori — one for provider-page sessions, one for offers.
+   "Son 1 ay" everywhere is the LAST COMPLETED calendar month (a month counts
+   as completed on its last day); "Son 1 yıl" is the trailing 365 days. */
+var TR_AY = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos",
+  "Eylül", "Ekim", "Kasım", "Aralık"];
+function completedYM() {
+  var t = new Date();
+  var tomorrow = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1);
+  var y = t.getFullYear(), m = t.getMonth() + 1;          /* 1-based */
+  if (tomorrow.getMonth() === t.getMonth()) {             /* not the last day */
+    m -= 1;
+    if (m === 0) { y -= 1; m = 12; }
+  }
+  var ym = y + "-" + (m < 10 ? "0" : "") + m;
+  /* never point at a month the data does not have yet */
+  var avail = (MKT.months || []).filter(function (k) { return k <= ym; });
+  return avail.length ? avail[avail.length - 1] : ym;
+}
+function ymLabel(ym) {
+  var p = ym.split("-");
+  return TR_AY[+p[1] - 1] + " " + p[0];
+}
+
 var regionState = { city: "İstanbul", cat: "Kır Düğünü", win: "y1", period: "y" };
 
 PAGES.rakip = function (el) {
@@ -499,12 +521,13 @@ PAGES.rakip = function (el) {
     }).join("") + "</select></div>" +
     "<div><label class='fld'>Kategori</label><select id='rg-cat'></select></div>" +
     "<div><label class='fld'>Dönem</label>" +
-    sel("rg-period", [{ v: "y", t: MKT.period ? MKT.period.y : "2026" },
+    sel("rg-period", [{ v: "y", t: MKT.year || "2026" },
                       { v: "m", t: "Son 1 ay" }], regionState.period) + "</div></div>" +
     '<div id="rg-market" style="margin-top:20px"></div></div>' +
     '<div class="panel"><h2>' + esc(R.title) + "</h2><p>" + esc(R.lead) + "</p>" +
     "<div class='grid g3' style='margin-top:14px'><div><label class='fld'>Dönem</label>" +
-    sel("rg-win", REG.windows.map(function (w) { return { v: w.k, t: w.t }; }), regionState.win) +
+    sel("rg-win", [{ v: "w1", t: "Son 1 hafta" }, { v: "w2", t: "Son 15 gün" },
+                   { v: "m1", t: "Son 1 ay" }, { v: "y1", t: "Son 1 yıl" }], regionState.win) +
     "</div></div>" +
     '<div id="rg-out" style="margin-top:20px"></div></div>';
   bindRegion();
@@ -540,14 +563,20 @@ function drawMarket(catOnly) {
   var city = MKT.city && MKT.city[regionState.city];
   var seg = MKT.seg && MKT.seg[regionState.city + "|" + regionState.cat];
   if (!city) { out.innerHTML = "<p style='color:var(--mute)'>Bu şehir için evlilik verisi yok.</p>"; return; }
-  var p = regionState.period;
-  var label = p === "y" ? MKT.period.y : MKT.period.m;
-  var marriages = city.marriages[p], share = city.share[p];
+  var monthly = regionState.period === "m";
+  var cym = completedYM();
+  var label = monthly ? ymLabel(cym) : MKT.year;
+  var marriages = monthly ? (city.marriagesM[cym] || 0) : city.marriagesY;
+  /* one static share per city: couples with a 2025 wedding ÷ official 2025
+     marriages, floored at 66% */
+  var share = city.share, floored = city.shareRaw < MKT.minShare;
   var onDc = Math.round(marriages * share);
-  var catCouples = seg ? seg.couples[p] : 0;
+  var catCouples = monthly
+    ? ((seg && seg.couplesLeadM[cym]) || 0)
+    : ((seg && seg.couplesY) || 0);
   var catBox = '<div class="v num" data-count="' + catCouples + '">0</div>' +
     "<div class='l'>çift " + esc(regionState.cat.toLocaleLowerCase("tr")) + " tercih etti</div>" +
-    "<div class='s'>" + esc(label) + " düğünleri</div>";
+    "<div class='s'>" + (monthly ? esc(label) + " teklifleri" : "2026 düğünleri") + "</div>";
   var punch = esc(regionState.city) + "'da " + esc(label) + " döneminde <b>" + n(marriages) +
     "</b> evlilik var; bunların <b>" + n(onDc) + "</b> tanesi mekanını Düğün.com'da buldu. " +
     (catCouples ? "<b>" + n(catCouples) + "</b> çift " +
@@ -563,7 +592,8 @@ function drawMarket(catOnly) {
     "<div class='l'>Evlilik Oldu</div><div class='s'>" + esc(regionState.city) + " · " + esc(label) + "</div></div>" +
     '<div class="f3-arrow">→</div>' +
     '<div class="f3 hi"><div class="v num" data-count="' + onDc + '">0</div>' +
-    "<div class='l'>Çift mekanını Düğün.com'da buldu</div><div class='s'>" + esc(label) + "</div></div>" +
+    "<div class='l'>Çift mekanını Düğün.com'da buldu</div><div class='s'>" +
+    (floored ? "min %66 varsayımı" : "2025 çift payı " + pct(share, 0)) + "</div></div>" +
     '<div class="f3-arrow">→</div>' +
     '<div class="f3" id="rg-catbox">' + catBox + "</div></div>" +
     '<div class="punch" id="rg-punch" style="margin-top:18px">' + punch + "</div>" +
@@ -571,22 +601,45 @@ function drawMarket(catOnly) {
   countUp(out);
 }
 
+/* card 2: the two funnels */
+function winVal(block, win, cym) {
+  if (!block) return 0;
+  if (win === "m1") return (block.m && block.m[cym]) || 0;
+  return block[win] || 0;
+}
 function drawRegion() {
-  var cell = REG.data[regionState.city + "|" + regionState.cat];
-  var seg = MKT.seg && MKT.seg[regionState.city + "|" + regionState.cat];
   var out = $("#rg-out");
-  if (!cell) {
+  var key = regionState.city + "|" + regionState.cat;
+  var seg = MKT.seg && MKT.seg[key];
+  var cityT = MKT.cityTot && MKT.cityTot[regionState.city];
+  if (!seg || !cityT || !MKT.tr) {
     out.innerHTML = "<p style='color:var(--mute)'>Bu şehir ve kategori için veri yok.</p>"; return;
   }
-  var w = cell.w[regionState.win];
-  var sessions = seg ? seg.sessions[regionState.win] : null;
-  var label = REG.windows.filter(function (x) { return x.k === regionState.win; })[0].t;
-  out.innerHTML = '<div class="grid g2">' +
-    stat(sessions == null ? 0 : sessions, "Çift ziyareti", "") +
-    stat(w.offers, "Teklif", "") + "</div>" +
+  var cym = completedYM();
+  var winLabel = { w1: "son 1 hafta", w2: "son 15 gün", m1: ymLabel(cym), y1: "son 1 yıl" }[regionState.win];
+
+  function funnel(title, metric) {
+    var trV = winVal(MKT.tr[metric], regionState.win, cym);
+    var ciV = winVal(cityT[metric], regionState.win, cym);
+    var sgV = winVal(seg[metric], regionState.win, cym);
+    return "<h3 style='margin:18px 0 10px'>" + esc(title) + "</h3>" +
+      '<div class="funnel3">' +
+      '<div class="f3"><div class="v num" data-count="' + trV + '">0</div>' +
+      "<div class='l'>Tüm Türkiye</div><div class='s'>tüm kategoriler</div></div>" +
+      '<div class="f3-arrow">→</div>' +
+      '<div class="f3"><div class="v num" data-count="' + ciV + '">0</div>' +
+      "<div class='l'>" + esc(regionState.city) + "</div><div class='s'>tüm kategoriler</div></div>" +
+      '<div class="f3-arrow">→</div>' +
+      '<div class="f3 hi"><div class="v num" data-count="' + sgV + '">0</div>' +
+      "<div class='l'>" + esc(regionState.city) + " · " + esc(regionState.cat) +
+      "</div><div class='s'>" + esc(winLabel) + "</div></div></div>";
+  }
+
+  out.innerHTML = funnel("Çift ziyareti", "sessions") + funnel("Teklif", "offers") +
     '<div class="punch" style="margin-top:18px">' + esc(regionState.city) + " · " +
-    esc(regionState.cat) + " segmentinde <b>" + label.toLowerCase() + "</b> " +
-    "<b>" + n(sessions || 0) + "</b> çift ziyareti ve <b>" + n(w.offers) + "</b> teklif oluştu.</div>";
+    esc(regionState.cat) + " segmentinde <b>" + esc(winLabel) + "</b> döneminde <b>" +
+    n(winVal(seg.sessions, regionState.win, cym)) + "</b> çift ziyareti ve <b>" +
+    n(winVal(seg.offers, regionState.win, cym)) + "</b> teklif oluştu.</div>";
   countUp(out);
 }
 function stat(v, l, s, money) {

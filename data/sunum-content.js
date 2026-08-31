@@ -115,7 +115,7 @@ window.SUNUM = {
     marketTitle: "Kaç evlilik oldu, ne kadarı Düğün.com'u kullandı?",
     marketLead: "Şehir ve kategori seçin. Resmi evlilik sayısından başlayıp Düğün.com'daki " +
       "çiftlere, oradan sizin kategorinizde teklif alan çiftlere inelim.",
-    marriageNote: "Evlilik sayıları resmi istatistiklerinin 2026 projeksiyonudur.",
+    marriageNote: "Evlilik sayıları; 2025 TUIK resmi istatistiklerinin, 2026 projeksiyonudur.",
     title: "Bölgenizde şu an ne oluyor?",
     lead: "Aynı şehir ve kategoride, Düğün.com üzerinden gerçekleşen hareketi birlikte okuyalım."
   },
