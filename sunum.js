@@ -575,8 +575,7 @@ function drawMarket(catOnly) {
     ? ((seg && seg.couplesLeadM[cym]) || 0)
     : ((seg && seg.couplesY) || 0);
   var catBox = '<div class="v num" data-count="' + catCouples + '">0</div>' +
-    "<div class='l'>çift " + esc(regionState.cat.toLocaleLowerCase("tr")) + " tercih etti</div>" +
-    "<div class='s'>" + (monthly ? esc(label) + " teklifleri" : "2026 düğünleri") + "</div>";
+    "<div class='l'>çift " + esc(regionState.cat.toLocaleLowerCase("tr")) + " tercih etti</div>";
   var punch = esc(regionState.city) + "'da " + esc(label) + " döneminde <b>" + n(marriages) +
     "</b> evlilik var; bunların <b>" + n(onDc) + "</b> tanesi mekanını Düğün.com'da buldu. " +
     (catCouples ? "<b>" + n(catCouples) + "</b> çift " +
@@ -589,11 +588,10 @@ function drawMarket(catOnly) {
   }
   out.innerHTML = '<div class="funnel3">' +
     '<div class="f3"><div class="v num" data-count="' + marriages + '">0</div>' +
-    "<div class='l'>Evlilik Oldu</div><div class='s'>" + esc(regionState.city) + " · " + esc(label) + "</div></div>" +
+    "<div class='l'>Evlilik Oldu</div></div>" +
     '<div class="f3-arrow">→</div>' +
     '<div class="f3 hi"><div class="v num" data-count="' + onDc + '">0</div>' +
-    "<div class='l'>Çift mekanını Düğün.com'da buldu</div><div class='s'>" +
-    (floored ? "min %66 varsayımı" : "2025 çift payı " + pct(share, 0)) + "</div></div>" +
+    "<div class='l'>Çift mekanını Düğün.com'da buldu</div></div>" +
     '<div class="f3-arrow">→</div>' +
     '<div class="f3" id="rg-catbox">' + catBox + "</div></div>" +
     '<div class="punch" id="rg-punch" style="margin-top:18px">' + punch + "</div>" +
