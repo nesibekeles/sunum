@@ -416,6 +416,8 @@ var SIM_CSS =
   "header{display:none!important}:root{--hdr:0px!important}" +
   /* the venue never needs to see which access code is active */
   ".codeline{display:none!important}" +
+  /* section titles ("Aylık talep tahmini", "Yatırımın geri dönüşü") step up */
+  ".sec-title{font-size:30px!important}" +
   "html,body{background:transparent!important;overflow:hidden!important;height:100%!important}" +
   /* #page0 is the access-code screen the 26.08.2026 build added — it gets the
      same fit-to-frame treatment as the venue screen */
@@ -503,10 +505,10 @@ PAGES.verim = function (el) {
       $$(".warnband", doc).forEach(function (w) {
         var span = w.querySelector("span:last-child");
         if (span) span.innerHTML =
-          '<span style="font-weight:400">Benzer mekanların gerçekleşen verisinden hesaplanır. ' +
-          "Sonuçlar mekanın profiline eklediği <u>fotoğraf kalitesi, kampanya çıkıp çıkmadığı, " +
-          "kendisine ulaşan çiftlere ne kadar sürede geri döndüğü</u> gibi çeşitli metriklere " +
-          "göre değişir.</span>" +
+          "<b>Benzer mekanların gerçekleşen verisinden hesaplanır.</b> " +
+          '<span style="font-weight:400">Sonuçlar mekanın profiline eklediği ' +
+          "<u>fotoğraf kalitesi, kampanya çıkıp çıkmadığı, kendisine ulaşan çiftlere " +
+          "ne kadar sürede geri döndüğü</u> gibi çeşitli metriklere göre değişir.</span>" +
           "<small>Tüm rakamlar tahmini ortalamalardır — taahhüt değildir.</small>";
       });
       /* the simulator flips page1/page2 by inline display — watch for it */
