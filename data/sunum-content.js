@@ -17,9 +17,9 @@ window.SUNUM = {
     { id: "verim", w: 3, area: "c", icon: "trend",
       t: "Maksimum verimi almak sizin elinizde",
       d: "Aynı paketle ne kadar fark yaratılabilir?" },
-    { id: "roi", w: 3, area: "d", icon: "return",
-      t: "Ne vereceksiniz, ne alacaksınız?",
-      d: "Yatırım ve geri dönüş, birlikte hesaplayalım" },
+    { id: "bosgun", w: 3, area: "d", icon: "calendar",
+      t: "Boş günleriniz ne olacak?",
+      d: "Joker kartımız: Özel Fiyat" },
     { id: "ortaklik", w: 2, area: "e", icon: "partner",
       t: "İşinizi birlikte büyütmek için çok çalışıyoruz",
       d: "Bir listelemeden çok daha fazlası" },
@@ -28,10 +28,7 @@ window.SUNUM = {
       d: "Rakip değiliz, arayışın başladığı yeriz" },
     { id: "rakip", w: 2, area: "g", icon: "radar",
       t: "Rakipler ne durumda?",
-      d: "Bölgenizde şu an ne oluyor?" },
-    { id: "bosgun", w: 2, area: "h", icon: "calendar",
-      t: "Boş günleriniz ne olacak?",
-      d: "Joker kartımız: Özel Fiyat" }
+      d: "Bölgenizde şu an ne oluyor?" }
   ],
 
   baslar: {
@@ -124,6 +121,26 @@ window.SUNUM = {
     title: "Boş günleriniz ne olacak?",
     lead: "Cumartesi akşamı dolu olabilir. Peki hafta içi, gündüz ve pazar günleri? " +
       "Boş kalan gün, geri gelmeyen gelirdir.",
+    /* the loss calculator — the training's "20 × 350.000 = 7 milyon" moment.
+       Both numbers are asked to the venue owner; the screen does the maths. */
+    loss: {
+      t: "Boş günün maliyeti",
+      d: "İki rakamı birlikte dolduralım — hesabı ekran yapsın.",
+      days: "Yılda kaç gününüz boş geçiyor?",
+      value: "Ortalama bir düğünün size getirisi (₺)",
+      out: "masada kalan yıllık ciro",
+      punch: "Yılda <b>{sum}</b> masada kalıyor. Aşağıdaki her şey, bu rakamı geri almak için var."
+    },
+    /* the strong diagnosis from the sales-method training: empty-day demand is
+       a lever on Saturday pricing, not just a patch on the calendar */
+    power: {
+      t: "Fiyatlama gücü: boş gün, sadece boş gün değildir",
+      d: "Mesele yalnızca boş günü doldurmak değil. Talep havuzunuz büyüdükçe, en değerli " +
+         "gününüzü — cumartesiyi — premium fiyata satma özgüvenini kazanırsınız. Bütçesi " +
+         "yetmeyen çifti kaybetmezsiniz; boş cuma ve pazar günlerinize kaydırırsınız.",
+      punch: "Boş güne gelen ek talep, cumartesi fiyatınızı yukarı çeken bir kaldıraçtır: " +
+         "doluluk arttıkça fiyatı siz belirlersiniz, iskonto yapan taraf olmazsınız."
+    },
     joker: {
       t: "Joker kartımız: Özel Fiyat",
       d: "Belirli tarihler ya da belirli koşullar için özel fiyat tanımlarsınız. Kartınız " +

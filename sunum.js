@@ -646,113 +646,6 @@ function stat(v, l, s, money) {
     "</div>" + (s ? '<div class="s">' + esc(s) + "</div>" : "") + "</div>";
 }
 
-/* ------------------------------------------------------------------ 6. ROI */
-/* The simulator's ROI card, and nothing else — same model, same formulas.
-   The model is read out of the simulator file itself (the <script id="model">
-   block), so the two can never disagree. The three quality inputs the
-   simulator exposes (profil kalitesi, dönüş süresi, dönüş oranı) stay at the
-   simulator's own defaults here and are not shown. */
-var SIM = null;                 /* parsed model */
-var roi = { city: "İstanbul", grp: "Kır", X: 4, ciro: 350000, kap: 20, fee: null, feeTouched: false };
-var SIM_DEFAULTS = { ps: "Çok İyi", rt: "30 dk", rr: "%100" };
-var GRP_LABEL = { "Kır": "Kır Düğünü", "Balo+Salon": "Düğün Salonu / Balo-Davet",
-  "Söz Nişan": "Söz-Nişan Mekanı", "Diğer Mekan": "Diğer Mekan", "Kına": "Kına / Bekarlığa Veda" };
-var GRPS = ["Kır", "Balo+Salon", "Söz Nişan", "Diğer Mekan", "Kına"];
-
-function loadSim(done) {
-  if (SIM) return done(SIM);
-  fetch(C.links.simulatorLocal).then(function (r) { return r.text(); }).then(function (txt) {
-    var m = txt.match(/<script id="model"[^>]*>([\s\S]*?)<\/script>/);
-    if (!m) throw new Error("model yok");
-    var M = JSON.parse(m[1]);
-    var IDX = {}; M.lookup_cols.forEach(function (c, i) { IDX[c] = i; });
-    var LK = {};
-    M.lookup.forEach(function (r) {
-      LK[[r[IDX.city], r[IDX.grp], r[IDX.X], r[IDX.ps], r[IDX.rt], r[IDX.rr]].join("|")] = r;
-    });
-    SIM = { M: M, IDX: IDX, LK: LK,
-      cities: M.meta.cities, XS: M.meta.X.filter(function (x) { return x !== 3; }) };
-    done(SIM);
-  })["catch"](function () { done(null); });
-}
-/* identical to the simulator's calc(): mult = 1 (no district, no customer,
-   expected scenario) */
-function simCalc(X) {
-  var r = SIM.LK[[roi.city, roi.grp, X, SIM_DEFAULTS.ps, SIM_DEFAULTS.rt, SIM_DEFAULTS.rr].join("|")];
-  if (!r) return null;
-  var I = SIM.IDX, org = r[I.org_month];
-  var orgR = Math.round(org), plusR = Math.round(org * SIM.M.meta.plus_ratio_default);
-  return { org: orgR, plus: plusR, tot: orgR + plusR };
-}
-function simPrice(X) {
-  var p = SIM.M.price_per_x.filter(function (q) {
-    return q.city === roi.city && q.grp === roi.grp && q.X === X; })[0];
-  return p ? p.value_per_x_month * X * 12 : null;
-}
-
-PAGES.roi = function (el) {
-  el.innerHTML = '<div class="panel"><p style="color:var(--mute)">Simülatör modeli yükleniyor…</p></div>';
-  loadSim(function (sim) {
-    if (!sim) {
-      el.innerHTML = '<div class="panel"><p>ROI kartı simülatör modelini okuyamadı. Bu sayfa ' +
-        "bir sunucu üzerinden (https) açıldığında çalışır.</p></div>";
-      return;
-    }
-    if (sim.cities.indexOf(roi.city) < 0) roi.city = sim.cities[0];
-    el.innerHTML =
-      '<div class="panel"><h2>Yatırımın geri dönüşü</h2>' +
-      "<p>Rakamları mekan sahibiyle birlikte doldurun — kapanış oranını o söylesin.</p>" +
-      '<div class="grid g3" style="margin-top:16px">' +
-      "<div><label class='fld'>Şehir</label>" + sel("r-city", sim.cities, roi.city) + "</div>" +
-      "<div><label class='fld'>Kategori</label>" +
-      sel("r-grp", GRPS.map(function (g) { return { v: g, t: GRP_LABEL[g] }; }), roi.grp) + "</div>" +
-      "<div><label class='fld'>Paket</label>" +
-      sel("r-x", sim.XS.map(function (x) { return { v: String(x), t: x + "X" }; }), String(roi.X)) +
-      "</div></div></div>" +
-      '<div class="panel roi-card"><div class="grid g3">' +
-      "<div><label class='fld'>Ortalama düğün cirosu (TL)</label>" +
-      "<input type='number' id='r-ciro' value='" + roi.ciro + "' step='10000' min='0'></div>" +
-      "<div><label class='fld'>100 çiftten kaçını kapatır?</label>" +
-      "<input type='number' id='r-kap' value='" + roi.kap + "' step='5' min='0' max='100'></div>" +
-      "<div><label class='fld'>Yıllık üyelik bedeli (TL) <span class='hint' id='r-hint'></span></label>" +
-      "<input type='number' id='r-fee' step='1000' min='0'></div></div>" +
-      '<div class="roi-out" id="r-out"></div>' +
-      '<div class="punch" id="r-note" style="margin-top:16px"></div></div>';
-    bindSel("r-city", function (v) { roi.city = v; roi.feeTouched = false; drawRoi(); });
-    bindSel("r-grp", function (v) { roi.grp = v; roi.feeTouched = false; drawRoi(); });
-    bindSel("r-x", function (v) { roi.X = +v; roi.feeTouched = false; drawRoi(); });
-    $("#r-ciro").addEventListener("input", function () { roi.ciro = +this.value || 0; drawRoi(); });
-    $("#r-kap").addEventListener("input", function () { roi.kap = +this.value || 0; drawRoi(); });
-    $("#r-fee").addEventListener("input", function () { roi.feeTouched = true; roi.fee = +this.value || 0; drawRoi(); });
-    drawRoi();
-  });
-};
-
-function drawRoi() {
-  var c = simCalc(roi.X), out = $("#r-out"), note = $("#r-note");
-  if (!out) return;
-  var pf = simPrice(roi.X), feeEl = $("#r-fee");
-  if (!roi.feeTouched) {
-    roi.fee = pf ? Math.round(pf / 1000) * 1000 : 0;
-    feeEl.value = roi.fee || "";
-  }
-  $("#r-hint").textContent = pf ? "ortalama " + tl(pf) : "ortalama yok";
-  if (!c) { out.innerHTML = "<p style='color:var(--mute)'>Bu şehir ve kategori için model yok.</p>"; note.innerHTML = ""; return; }
-  var yl = c.tot * 12, wed = yl * roi.kap / 100, rev = wed * roi.ciro, fee = roi.fee || 0;
-  function tlS(v) { return v >= 1e6 ? n(v / 1e6, 1) + " mn ₺" : tl(v); }
-  out.innerHTML =
-    '<div class="o"><div class="t">Yıllık talep</div><div class="v">' + n(yl) + '</div><div class="s">organik + plus, 12 ay</div></div>' +
-    '<div class="o"><div class="t">Tahmini düğün</div><div class="v">' + n(wed) + '</div><div class="s">yıllık · ' + n(yl) + " × " + roi.kap + "/100</div></div>" +
-    '<div class="o pos"><div class="t">Tahmini ciro</div><div class="v" title="' + esc(tl(rev)) + '">' + tlS(rev) + '</div><div class="s">yıllık · düğün × ciro</div></div>' +
-    '<div class="o big"><div class="t">Üyelik bedelinin</div><div class="v">' + (fee > 0 ? n(rev / fee) + "×" : "—") + '</div><div class="s">katı geri dönüyor</div></div>';
-  note.innerHTML = fee > 0
-    ? "Tek bir düğün üyelik bedelinin <b>" + n(roi.ciro / fee, 1) + " katı</b>; üyeliğin kendini " +
-      "ödemesi için yılda <b>" + n(Math.ceil(fee / (roi.ciro || 1))) + " düğün</b> yeter. Senin " +
-      "söylediğin kapanış oranıyla tahmin <b>" + n(wed) + " düğün</b> — <b>" + n(rev / fee) +
-      " kat</b> geri dönüş."
-    : "Üyelik bedelini girin.";
-}
-
 /* --------------------------------------------------------------- 7. Boş gün */
 /* A month on screen instead of a paragraph: Saturdays sold, everything else
    quiet; flip the switch and the weekdays and Sundays that Özel Fiyat reaches
@@ -820,6 +713,19 @@ PAGES.bosgun = function (el) {
     '<div class="note">' + esc(B.cmp.note) + "</div></div>";
 
   el.innerHTML = '<div class="panel hero-tint"><h2>' + esc(B.title) + "</h2><p>" + esc(B.lead) + "</p></div>" +
+    /* the training's case-study moment: the venue owner's own two numbers,
+       multiplied in front of them */
+    '<div class="panel loss"><h2>' + esc(B.loss.t) + "</h2><p>" + esc(B.loss.d) + "</p>" +
+    '<div class="grid g3" style="margin-top:14px;align-items:end">' +
+    "<div><label class='fld'>" + esc(B.loss.days) + "</label>" +
+    "<input type='number' id='bg-days' value='20' min='0' step='1'></div>" +
+    "<div><label class='fld'>" + esc(B.loss.value) + "</label>" +
+    "<input type='number' id='bg-value' value='350000' min='0' step='10000'></div>" +
+    '<div class="loss-out"><div class="v num" id="bg-sum">—</div><div class="l">' +
+    esc(B.loss.out) + "</div></div></div>" +
+    '<div class="punch" id="bg-punch" style="margin-top:14px"></div></div>' +
+    '<div class="panel"><h2>' + esc(B.power.t) + "</h2><p>" + esc(B.power.d) + "</p>" +
+    '<div class="punch">' + esc(B.power.punch) + "</div></div>" +
     '<div class="panel tint"><h2>' + esc(B.joker.t) + "</h2><p>" + esc(B.joker.d) + "</p></div>" +
     '<div class="grid g4 facts">' + info.map(function (f, i) {
       return '<div class="stat"><div class="fi">' + icon(FACT_ICONS[i % FACT_ICONS.length], 26) + "</div>" +
@@ -838,6 +744,16 @@ PAGES.bosgun = function (el) {
         'preload="metadata" playsinline></video></div>' +
         '<div class="vid-cap" style="text-align:center">' + esc(a.t) + "</div></div>";
     }).join("") + "</div></div>";
+  function lossCalc() {
+    var days = Math.max(0, +$("#bg-days").value || 0);
+    var val = Math.max(0, +$("#bg-value").value || 0);
+    var sum = days * val;
+    $("#bg-sum").textContent = tl(sum);
+    $("#bg-punch").innerHTML = B.loss.punch.replace("{sum}", tl(sum));
+  }
+  $("#bg-days").addEventListener("input", lossCalc);
+  $("#bg-value").addEventListener("input", lossCalc);
+  lossCalc();
 };
 function dateTr(iso) {
   var p = String(iso || "").split("-");

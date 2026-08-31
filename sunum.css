@@ -85,20 +85,20 @@ b, strong { font-weight: 800; }
 .bento {
   flex: 1 1 auto; min-height: 0;
   display: grid; gap: 14px;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   /* a floor under the row height: below this the tiles would be unreadable, so
      the board scrolls instead of crushing them */
   grid-template-rows: repeat(4, minmax(84px, 1fr));
   /* Placed by attention, not by reading order. On a laptop or tablet the eye
      lands top-left, sweeps right along the top, then drops down the left — so
      the two heaviest topics take the whole top band, the two mid-weight ones
-     take the middle, and the four light ones sit on the bottom rail. Weight
+     take the middle, and the three light ones share the bottom rail. Weight
      descends by BAND, never in a diagonal cascade. */
   grid-template-areas:
-    "a a b b"
-    "a a b b"
-    "c c d d"
-    "e f g h";
+    "a a a b b b"
+    "a a a b b b"
+    "c c c d d d"
+    "e e f f g g";
 }
 .tile {
   position: relative; overflow: hidden; text-align: left; cursor: pointer;
@@ -502,6 +502,15 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
   50% { box-shadow: 0 10px 24px rgba(226,27,113,.35), 0 0 0 10px rgba(226,27,113,.08); }
 }
 
+/* --------------------------------------------------- the loss calculator */
+.panel.loss { border: 2px solid var(--coral); background: linear-gradient(180deg, #fff, #FFF6F3); }
+.loss-out { text-align: center; background: #fff; border: 1px solid var(--line);
+  border-radius: 14px; padding: 12px 10px; }
+.loss-out .v { font-size: clamp(22px, 2.4vw, 30px); font-weight: 900; color: var(--coral);
+  letter-spacing: -.03em; white-space: nowrap; }
+.loss-out .l { font-size: 11.5px; color: var(--mute); margin-top: 3px; }
+.panel.loss .punch { border-left-color: var(--coral); background: #FFF3EF; }
+
 /* ------------------------------------------- with/without Özel Fiyat */
 .cmp-wrap { align-items: stretch; }
 .cmp-wrap .stat.hero { display: flex; flex-direction: column; justify-content: center; margin: 0; }
@@ -577,13 +586,13 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
   .s-board { height: auto; overflow: visible; padding-bottom: 50px; }
   .bento { grid-template-rows: none; grid-auto-rows: 158px;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-areas: "a a" "a a" "b b" "b b" "c c" "d d" "e f" "g h"; }
+    grid-template-areas: "a a" "a a" "b b" "b b" "c c" "d d" "e f" "g g"; }
   .g4 { grid-template-columns: repeat(2, 1fr); }
   .g3 { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
   .bento { grid-template-columns: 1fr; grid-auto-rows: 132px; grid-template-rows: none;
-    grid-template-areas: "a" "a" "b" "b" "c" "d" "e" "f" "g" "h"; }
+    grid-template-areas: "a" "a" "b" "b" "c" "d" "e" "f" "g"; }
   .g2, .g3, .g4 { grid-template-columns: 1fr; }
   .s-board, .s-topic { padding-left: 16px; padding-right: 16px; }
   .panel { padding: 20px; }
