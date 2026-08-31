@@ -128,6 +128,8 @@ window.SUNUM = {
   bosgun: {
     title: "Boş günleriniz ne olacak?",
     lead: "Cumartesi akşamı dolu olabilir. Peki hafta içi, gündüz ve pazar günleri?",
+    sec1: "Birlikte Hesaplayalım",
+    sec2: "Joker kartımız: Özel Fiyat",
     /* the loss calculator — the training's "20 × 350.000 = 7 milyon" moment.
        Both numbers are asked to the venue owner; the screen does the maths. */
     loss: {
@@ -186,7 +188,7 @@ window.SUNUM = {
       d: "Özel Fiyat'ı açan firmalarda, açılıştan önceki ve sonraki verilerini karşılaştırdık.",
       count: "firma, son bir yılda boş günlerini Özel Fiyat sayesinde doldurdu.",
       stats: [
-        { v: "+%25", l: "organik ulaşan çift / ay", s: "tipik firmada ayda +3–4 çift" },
+        { v: "+%25", l: "organik iletişime geçen çift / ay", s: "tipik firmada ayda +3–4 çift" },
         { v: "+%15", l: "sayfa görüntüleme / ay", s: "listede görünme ve tıklama da artıyor" }
       ]
     },
@@ -213,9 +215,9 @@ window.SUNUM = {
       unknown: "Satış kaydınızla eşleşme bulunamadı — ekip örneklerini gösteriyoruz."
     },
     others: {
-      t: "Diğer iş geliştirme yöneticilerinin firmaları",
-      d: "Ekibimdeki diğer arkadaşlarımın son 1 yılda sattığı firmalar arasından örnekler.",
-      dAll: "Tüm satış ekiplerinin son 1 yılda sattığı firmalar arasından örnekler.",
+      t: "Düğün.com firmaları",
+      d: "Son 1 yılda satışını yaptığımız firmalar arasından örnekler.",
+      dAll: "Son 1 yılda satışını yaptığımız firmalar arasından örnekler.",
       more: "Daha fazla göster"
     },
     stories: {

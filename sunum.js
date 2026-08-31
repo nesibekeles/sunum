@@ -503,9 +503,10 @@ PAGES.verim = function (el) {
       $$(".warnband", doc).forEach(function (w) {
         var span = w.querySelector("span:last-child");
         if (span) span.innerHTML =
-          "Benzer mekanların gerçekleşen verisinden hesaplanır. Sonuçlar mekanın profiline " +
-          "eklediği fotoğraf kalitesi, kampanya çıkıp çıkmadığı, kendisine ulaşan çiftlere " +
-          "ne kadar sürede geri döndüğü gibi çeşitli metriklere göre değişir." +
+          '<span style="font-weight:400">Benzer mekanların gerçekleşen verisinden hesaplanır. ' +
+          "Sonuçlar mekanın profiline eklediği <u>fotoğraf kalitesi, kampanya çıkıp çıkmadığı, " +
+          "kendisine ulaşan çiftlere ne kadar sürede geri döndüğü</u> gibi çeşitli metriklere " +
+          "göre değişir.</span>" +
           "<small>Tüm rakamlar tahmini ortalamalardır — taahhüt değildir.</small>";
       });
       /* the simulator flips page1/page2 by inline display — watch for it */
@@ -577,6 +578,10 @@ PAGES.rakip = function (el) {
     sel("rg-period", [{ v: "y", t: MKT.year || "2026" },
                       { v: "m", t: "Son 1 ay" }], regionState.period) + "</div></div>" +
     '<div id="rg-market" style="margin-top:20px"></div></div>' +
+    '<div class="panel ask"><div class="ask-ic">' +
+    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M4 5h16v10H9l-5 4V5z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg></div>' +
+    "<div><h3>" + esc(S.instagram.askTitle) + "</h3><p style='margin:0'>" + esc(S.instagram.askText) + "</p></div></div>" +
     '<div class="panel"><h2>' + esc(R.title) + "</h2><p>" + esc(R.lead) + "</p>" +
     "<div class='grid g3' style='margin-top:14px'><div><label class='fld'>Dönem</label>" +
     sel("rg-win", [{ v: "w1", t: "Son 1 hafta" }, { v: "w2", t: "Son 15 gün" },
@@ -686,15 +691,11 @@ function drawRegion() {
       "</div><div class='s'>" + esc(winLabel) + "</div></div></div>";
   }
 
-  out.innerHTML = funnel("Düğün.com trafiği", "sessions") + funnel("Ulaşan çift", "offers") +
+  out.innerHTML = funnel("Düğün.com trafiği", "sessions") + funnel("Firmalarla iletişime geçen çift", "offers") +
     '<div class="punch" style="margin-top:18px">' + esc(regionState.city) + " · " +
     esc(regionState.cat) + " segmentinde <b>" + esc(winLabel) + "</b> döneminde <b>" +
     n(winVal(seg.sessions, regionState.win, cym)) + "</b> Düğün.com ziyareti oldu, <b>" +
-    n(winVal(seg.offers, regionState.win, cym)) + "</b> çift firmalarla iletişime geçti.</div>" +
-    '<div class="panel ask" style="margin-top:18px"><div class="ask-ic">' +
-    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
-    '<path d="M4 5h16v10H9l-5 4V5z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg></div>' +
-    "<div><h3>" + esc(S.instagram.askTitle) + "</h3><p style='margin:0'>" + esc(S.instagram.askText) + "</p></div></div>";
+    n(winVal(seg.offers, regionState.win, cym)) + "</b> çift firmalarla iletişime geçti.</div>";
   countUp(out);
 }
 function stat(v, l, s, money) {
@@ -761,6 +762,7 @@ PAGES.bosgun = function (el) {
   var info = B.facts.filter(function (f) { return !f.count; });
 
   var sec1 =
+    '<h2 class="bg-sec">' + esc(B.sec1) + "</h2>" +
     '<p class="snap-lead">' + esc(B.lead) + "</p>" +
     '<div class="panel loss"><h2>' + esc(B.loss.t) + "</h2><p>" + esc(B.loss.d) + "</p>" +
     '<div class="grid g3" style="margin-top:10px;align-items:end">' +
@@ -782,7 +784,8 @@ PAGES.bosgun = function (el) {
     '<div class="punch" style="margin-top:12px">' + esc(B.power.punch) + "</div></div>";
 
   var sec2 =
-    '<div class="panel tint"><h2>' + esc(B.joker.t) + "</h2><p>" + esc(B.joker.d) + "</p></div>" +
+    '<h2 class="bg-sec">' + esc(B.sec2) + "</h2>" +
+    '<div class="panel tint"><p style="margin:0">' + esc(B.joker.d) + "</p></div>" +
     '<div class="grid g4 facts">' + info.map(function (f, i) {
       return '<div class="stat"><div class="fi">' + icon(FACT_ICONS[i % FACT_ICONS.length], 22) + "</div>" +
         '<div class="v">' + esc(f.v) + '</div><div class="l">' + esc(f.l) +
@@ -797,7 +800,8 @@ PAGES.bosgun = function (el) {
     }).join("") + "</div></div>";
 
   var sec3 =
-    '<div class="panel"><h3>' + esc(B.adsTitle) + "</h3><p>" + esc(B.adsLead) + "</p>" +
+    '<h2 class="bg-sec">' + esc(B.adsTitle) + "</h2>" +
+    '<div class="panel"><p style="margin:0 0 8px">' + esc(B.adsLead) + "</p>" +
     '<div class="grid g2" style="margin-top:12px">' +
     B.ads.map(function (a) {
       return '<div><div class="vid portrait"><video src="' + a.f + '" controls ' +
@@ -889,14 +893,14 @@ function providerCard(pid, i) {
     " · " + esc(p.product || "") + (p.started ? " · başlangıç " + esc(p.started) : "") + "</span></div></div>" +
     '<div class="pgrid">' +
     m(p.pvPm, "aylık ortalama sayfa görüntüleme", n) +
-    m(p.leadsPm, "aylık ortalama ulaşan çift", function (v) { return n(v, 1); }) +
-    m(p.leadsPm == null ? null : Math.round(p.leadsPm * 12), "1 yılda beklenen ulaşan çift", n) +
-    m(p.orgPm, "aylık ortalama organik ulaşan çift", function (v) { return n(v, 1); }) +
+    m(p.leadsPm, "aylık ortalama iletişime geçen çift", function (v) { return n(v, 1); }) +
+    m(p.igPm, "aylık Instagram'a geçiş", n) +
     m(p.rr, "dönüş oranı", function (v) { return pct(v, 0); }) +
     m(p.in1h, "1 saat içinde dönüş", function (v) { return pct(v, 0); }) +
     m(p.avgH, "ort. dönüş süresi", function (v) { return n(v, 1) + " sa"; }) +
-    m(p.igPm, "Instagram'a geçiş / ay", n) +
-    m(p.ps, "profil skoru", function (v) { return n(v * 100, 0) + "/100"; }) +
+    m(p.gallery, "galeri sayısı", n) +
+    m(p.reviews, "yorum sayısı", n) +
+    m(p.campaigns, "aktif kampanya sayısı", n) +
     "</div></div>";
 }
 function pickVideos(cat) {
@@ -986,16 +990,21 @@ function drawStory(user, maker) {
     });
   }
 
-  /* 1 — mine */
+  /* 1 — mine. A sales user only gets this section when they have at least two
+     qualifying pages overall (>=1 completed month, at or above the overall
+     average) — otherwise the whole accordion stays hidden. */
+  var mineAcc = $('.acc[data-key="mine"]');
   if (user.isSales) {
-    var ids = maker ? (maker.ex[cat] || []) : [];
-    if (!maker) {
-      mineEl.innerHTML = '<div class="note" style="margin:0 0 12px">' + esc(H.mine.unknown) + "</div>" +
-        paged("mine-team", teamPool(user.team || "ALL", cat, null), "mine");
-    } else if (!ids.length) {
-      mineEl.innerHTML = '<div class="note" style="margin:0">' + esc(H.mine.empty) + "</div>";
+    var allMine = maker ? (maker.ex["*"] || []) : [];
+    if (allMine.length < 2) {
+      if (mineAcc) mineAcc.style.display = "none";
+      mineEl.innerHTML = "";
     } else {
-      mineEl.innerHTML = paged("mine-" + maker.name, ids, "mine");
+      if (mineAcc) mineAcc.style.display = "";
+      var ids = maker.ex[cat] || [];
+      mineEl.innerHTML = ids.length
+        ? paged("mine-" + maker.name, ids, "mine")
+        : '<div class="note" style="margin:0">' + esc(H.mine.empty) + "</div>";
     }
   } else {
     mineEl.innerHTML = "<div class='grid g3'><div><label class='fld'>" + esc(H.mine.teamPick) + "</label>" +
@@ -1009,9 +1018,9 @@ function drawStory(user, maker) {
     });
   }
 
-  /* 2 — the rest of the team / all teams */
+  /* 2 — "Düğün.com firmaları": everything we sold, the viewer's own included */
   var pool2 = user.isSales
-    ? teamPool(user.team === "MoS" || user.team === "SAS" ? user.team : "ALL", cat, maker ? maker.name : null)
+    ? teamPool(user.team === "MoS" || user.team === "SAS" ? user.team : "ALL", cat, null)
     : teamPool("ALL", cat, null);
   othersEl.innerHTML = pool2.length
     ? paged("others", pool2, "others")

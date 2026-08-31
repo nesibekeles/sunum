@@ -521,6 +521,9 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
 .bg-tight .cal-count .v { font-size: 26px; }
 .bg-tight .vid.portrait { max-width: 200px; }
 .snap-lead { color: var(--ink-2); font-size: 14px; margin: 0 0 10px; }
+/* the three section headings on Boş günler */
+.bg-sec { font-size: 21px; color: var(--dark-pink); margin: 26px 0 10px; }
+.bg-tight .bg-sec:first-child { margin-top: 0; }
 
 /* money input: ₺ adornment + live thousands grouping */
 .tl-input { position: relative; display: block; }
