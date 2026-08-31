@@ -809,18 +809,15 @@ PAGES.bosgun = function (el) {
   var info = B.facts.filter(function (f) { return !f.count; });
   var hero = B.facts.filter(function (f) { return f.count; })[0];
 
-  var compareHtml = CP
-    ? '<div class="panel cmp"><h3>' + esc(B.cmp.t) + "</h3><p>" + esc(B.cmp.d.replace("{n}", n(CP.n))) + "</p>" +
-      '<div class="cmp-bars">' +
-      '<div class="cmp-row"><span class="cmp-l">' + esc(B.cmp.without) + '</span><div class="cmp-bar"><i style="width:' +
-      Math.round(100 * CP.withoutPerDay / CP.withPerDay) + '%"></i></div><b>' + n(CP.withoutPerDay, 1) + "</b></div>" +
-      '<div class="cmp-row on"><span class="cmp-l">' + esc(B.cmp.with) + '</span><div class="cmp-bar"><i style="width:100%"></i></div><b>' +
-      n(CP.withPerDay, 1) + "</b></div></div>" +
-      '<div class="cmp-out"><div><div class="v num" data-count="' + CP.extraPerMonth + '" data-suffix="">0</div><div class="l">' +
-      esc(B.cmp.extraVisits) + "</div></div>" +
-      '<div><div class="v">+' + n(CP.extraOffersPerMonth, 1) + '</div><div class="l">' + esc(B.cmp.extraOffers) + "</div></div></div>" +
-      '<div class="note">' + esc(B.cmp.note) + "</div></div>"
-    : "";
+  /* BI's on/off event study — figures maintained in sunum-content.js from
+     docs/OZEL_FIYAT_ONOFF_RESULTS.md, not computed by the panel */
+  var compareHtml =
+    '<div class="panel cmp"><h3>' + esc(B.cmp.t) + "</h3><p>" + esc(B.cmp.d) + "</p>" +
+    '<div class="cmp-out">' + B.cmp.stats.map(function (st) {
+      return '<div><div class="v">' + esc(st.v) + '</div><div class="l">' + esc(st.l) +
+        (st.s ? '</div><div class="l" style="color:var(--mute-2)">' + esc(st.s) : "") + "</div></div>";
+    }).join("") + "</div>" +
+    '<div class="note">' + esc(B.cmp.note) + "</div></div>";
 
   el.innerHTML = '<div class="panel hero-tint"><h2>' + esc(B.title) + "</h2><p>" + esc(B.lead) + "</p></div>" +
     '<div class="panel tint"><h2>' + esc(B.joker.t) + "</h2><p>" + esc(B.joker.d) + "</p></div>" +

@@ -147,18 +147,21 @@ window.SUNUM = {
       { v: "Ek ücret yok", l: "hizmet pakete dahil",
         d: "Özel Fiyat ve reklam desteği için ayrıca ücret alınmaz." }
     ],
-    /* the within-firm comparison (STORY.ozelFiyat.compare): the same venues,
-       campaign period vs. no-campaign period; {n} is filled at render time */
+    /* BI's on/off event study (docs/OZEL_FIYAT_ONOFF_RESULTS.md, 27.08.2026):
+       same firm, ±6 weeks around the campaign activation, season-adjusted,
+       2026 cohort (n=73). These figures are maintained by hand from that doc —
+       they do not come from the panel's own pull. */
     cmp: {
-      t: "Aynı firma, iki dönem",
-      d: "Özel Fiyat'ı daha önce kullanmış ve şu an kapalı olan {n} firmada, kampanyalı ve " +
-         "kampanyasız dönemlerin günlük sayfa ziyaretini karşılaştırdık.",
-      without: "Özel Fiyat'sız dönem · günlük ziyaret",
-      with: "Özel Fiyat'lı dönem · günlük ziyaret",
-      extraVisits: "ekstra ziyaret / ay",
-      extraOffers: "ekstra organik teklif / ay",
-      note: "Son 12 ay, ödeyen mekanlar; her iki dönemde en az 14 listelenme günü olan firmalar. " +
-            "Dönemler mevsimsel olarak birebir eşit değildir."
+      t: "Aynı firma, önce ve sonra",
+      d: "Özel Fiyat'ı açan firmalarda, açılıştan önceki ve sonraki 6 haftayı karşılaştırdık " +
+         "(2026'daki 73 kampanya açılışı; mevsim etkisinden arındırılmış).",
+      stats: [
+        { v: "+%25", l: "organik teklif / ay", s: "tipik firmada +3–4 teklif" },
+        { v: "+%15", l: "sayfa görüntüleme / ay", s: "listede görünme ve tıklama da artıyor" }
+      ],
+      note: "Aynı firmanın kampanya öncesi/sonrası ölçümü; oranlar şehir × kategori × ay " +
+            "mevsim etkisinden arındırılmıştır. Kampanya kapanınca etki ayna görüntüsüyle " +
+            "geri çekiliyor. Kaynak: BI on/off etki analizi, 27.08.2026."
     },
     ads: [
       { f: "assets/video/ozel-fiyat-reklam-1.mp4", t: "Özel Fiyat reklamı" },
