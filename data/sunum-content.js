@@ -179,12 +179,14 @@ window.SUNUM = {
       t: "Özel fiyatın somut faydası",
       d: "Özel Fiyat'ı açan firmaların kampanya öncesi ve sonrası dönemlerini, mevsim etkisinden arındırarak karşılaştırdık.",
       count: "firma, son bir yılda boş günlerini Özel Fiyat sayesinde doldurdu.",
-      /* season-adjusted before/after event study on ALL lead methods
-         (docs/OZEL_FIYAT_ONOFF_ALLLEADS.md): 2026 activations, n=345,
-         median ratios — total leads x1.09, page views x1.15 */
+      /* BI's season-adjusted event study (docs/OZEL_FIYAT_ONOFF_RESULTS.md,
+         2026 cut, n=73): organic leads +20-24%, pv +11-15%. Business decision
+         (Nes, 01.09.2026): quote the BI figures, label without the "organik"
+         qualifier. The in-house all-methods rerun (OZEL_FIYAT_ONOFF_ALLLEADS.md,
+         +9%/+15%) is with BI for review — revisit if they revise. */
       stats: [
-        { v: "+%9", l: "iletişime geçen çift / ay", s: "ayda ortalama +3–5 çift" },
-        { v: "+%15", l: "sayfa görüntüleme / ay", s: "ayda ortalama +74 görüntüleme" }
+        { v: "+%20", l: "iletişime geçen çift / ay", s: "ayda ortalama +3–4 çift" },
+        { v: "+%15", l: "sayfa görüntüleme / ay", s: "ayda ortalama +48 görüntüleme" }
       ]
     },
     ads: [
