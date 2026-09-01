@@ -132,9 +132,9 @@ window.SUNUM = {
     loss: {
       t: "Boş günün maliyeti",
       d: "İki rakamı birlikte dolduralım.",
-      days: "Yılda kaç gününüz boş geçiyor?",
+      days: "Satılabilir gün sayısı",
       value: "Ortalama bir düğünün size getirisi (₺)",
-      out: "masada kalan yıllık ciro",
+      out: "Potansiyel kazanç",
       punch: "Yılda <b>{sum}</b> masada kalıyor. Aşağıdaki her şey, bu rakamı geri almak için var."
     },
     /* the strong diagnosis from the sales-method training: empty-day demand is
