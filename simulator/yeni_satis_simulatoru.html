@@ -253,7 +253,7 @@ footer{max-width:1280px;margin:0 auto;padding:4px 20px 16px;font-size:11px;color
         <div class="kpi" data-rev><div class="t">Kaç kişi profilinizi ziyaret eder</div><div class="v" id="kPv">—</div><div class="s">çiftin mekan sayfasını açması / ay</div></div>
         <div class="kpi hero" data-rev><div class="t">Kaç çift iletişime geçer</div><div class="v" id="kTot">—</div><div class="s">yıllık <b id="kTotY">—</b> teklif</div></div>
         <div class="kpi" data-rev><div class="t">Organik teklif</div><div class="v" id="kOrg">—</div><div class="s">çiftin kendisinin gönderdiği (form · arama · WhatsApp)</div></div>
-        <div class="kpi" data-rev><div class="t">Artı teklif</div><div class="v" id="kPlus">—</div><div class="s">düğün.com'un yönlendirdiği teklifler</div></div>
+        <div class="kpi" data-rev><div class="t">Artı teklif</div><div class="v" id="kPlus">—</div><div class="s">düğün.com'un yönlendirdiği çiftler</div></div>
         <div class="kpi" data-rev><div class="t">Instagram yönlendirme</div><div class="v" id="kIg">—</div><div class="s">sayfadan Instagram'a geçen çift / ay</div></div>
       </div>
       <div class="scrollhint">▼ Geri dönüş için kaydır</div>
@@ -271,7 +271,7 @@ footer{max-width:1280px;margin:0 auto;padding:4px 20px 16px;font-size:11px;color
             <div><div class="lbl">Aylık üyelik bedeli</div><input type="text" id="fee" inputmode="numeric" placeholder="0 ₺"></div>
           </div>
           <div class="roi-out">
-            <div class="o"><div class="t">Yıllık teklif</div><div class="v" id="roiLeads">—</div><div class="s">organik + artı, 12 ay</div></div>
+            <div class="o"><div class="t">Yıllık iletişime geçen çift</div><div class="v" id="roiLeads">—</div><div class="s">organik + artı, 12 ay</div></div>
             <div class="o"><div class="t">Tahmini etkinlik</div><div class="v" id="roiWed">—</div><div class="s" id="roiWedS">—</div></div>
             <div class="o pos"><div class="t">Tahmini ciro</div><div class="v" id="roiCiro">—</div><div class="s">yıllık · etkinlik × fiyat</div></div>
             <div class="o big"><div class="t">Üyelik bedelinin</div><div class="v" id="roiMult">—</div><div class="s">katı geri dönüyor</div></div>
@@ -484,11 +484,11 @@ function render(){
   kpi('kImp',c.imp,'arama listesinde kartın gösterimi',true);
   kpi('kPv',c.pv,'çiftin mekan sayfasını açması',true);
   kpi('kOrg',c.org,'çiftin kendisinin gönderdiği (form · arama · WhatsApp)',false);
-  kpi('kPlus',c.plus,"düğün.com'un yönlendirdiği teklifler",false);
+  kpi('kPlus',c.plus,"düğün.com'un yönlendirdiği çiftler",false);
   kpi('kIg',c.ig,"sayfadan Instagram'a geçen çift",true);
   document.getElementById('kTot').textContent=fmt(yearly? c.tot*12 : c.tot);
   document.getElementById('kTot').parentElement.querySelector('.s').innerHTML =
-    yearly? 'aylık <b>'+fmt(c.tot)+'</b> teklif' : 'yıllık <b>'+fmt(c.tot*12)+'</b> teklif';
+    yearly? 'aylık <b>'+fmt(c.tot)+'</b>' : 'yıllık <b>'+fmt(c.tot*12)+'</b> teklif';
   if(S.mode!=="single"){
     const tb=document.querySelector('#xtab tbody'); tb.innerHTML='';
     const xc=document.getElementById('xcards'); xc.innerHTML='';
