@@ -443,7 +443,7 @@ var SIM_CSS =
    inside one — and the dot navigation lands exactly on each section. */
 PAGES.verim = function (el) {
   el.innerHTML = '<iframe class="simframe native" id="sim-frame" src="' +
-    C.links.simulatorLocal + '?v=20260901a" title="Satış Simülatörü"></iframe>';
+    C.links.simulatorLocal + '?v=20260901j" title="Satış Simülatörü"></iframe>';
   var f = $("#sim-frame"), topic = $("#s-topic"), doc = null, page2 = false;
 
   function frameH() {

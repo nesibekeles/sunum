@@ -244,7 +244,7 @@ footer{max-width:1280px;margin:0 auto;padding:4px 20px 16px;font-size:11px;color
         </div>
         <div class="frow" id="frow"></div>
       </div>
-      <h2 class="sec-title" data-rev style="margin-top:18px">Aylık <em>etkileşim tahmini</em></h2>
+      <h2 class="sec-title" data-rev style="margin-top:18px" id="kpiTitle">Aylık <em>etkileşim tahmini</em></h2>
       <p class="sec-sub" id="s1sub" data-rev></p>
       <div class="warnband" data-rev><span class="ic">⚠️</span><span>Tüm rakamlar <u>tahmini ortalamalardır</u> — taahhüt değildir.
         <small>Benzer mekanların gerçekleşen verisinden hesaplanır; sonuç mekanın kendi profiline ve çalışma temposuna göre değişir.</small></span></div>
@@ -469,12 +469,26 @@ function render(){
   document.getElementById('whoTxt').textContent=mk;
   const c=calc(S.X); if(!c) return;
   document.getElementById('s1sub').textContent = S.ps+' profil · '+S.rt+' dönüş süresi · '+S.rr+' dönüş oranı · '+SCEN[S.scen].toLowerCase();
-  document.getElementById('kImp').textContent=fmt(c.imp);
-  document.getElementById('kPv').textContent=fmt(c.pv);
-  document.getElementById('kTot').textContent=fmt(c.tot); document.getElementById('kTotY').textContent=fmt(c.tot*12);
-  document.getElementById('kOrg').textContent=fmt(c.org);
-  document.getElementById('kPlus').textContent=fmt(c.plus);
-  document.getElementById('kIg').textContent=fmt(c.ig);
+  /* Winner packages (and the Winner comparison) present YEARLY figures, the
+     monthly value moving into the small description; Pro stays monthly. */
+  const yearly = !/pro/i.test(S.simName||'');
+  document.getElementById('kpiTitle').innerHTML =
+    (yearly?'Yıllık':'Aylık')+' <em>etkileşim tahmini</em>';
+  const kpi=(id,v,base,perAy)=>{
+    const el=document.getElementById(id);
+    el.textContent=fmt(yearly? v*12 : v);
+    const s=el.parentElement.querySelector('.s');
+    if(s) s.innerHTML = yearly? base+' | aylık <b>'+fmt(v)+'</b>'
+                              : base+(perAy?' / ay':'');
+  };
+  kpi('kImp',c.imp,'arama listesinde kartın gösterimi',true);
+  kpi('kPv',c.pv,'çiftin mekan sayfasını açması',true);
+  kpi('kOrg',c.org,'çiftin kendisinin gönderdiği (form · arama · WhatsApp)',false);
+  kpi('kPlus',c.plus,"düğün.com'un yönlendirdiği teklifler",false);
+  kpi('kIg',c.ig,"sayfadan Instagram'a geçen çift",true);
+  document.getElementById('kTot').textContent=fmt(yearly? c.tot*12 : c.tot);
+  document.getElementById('kTot').parentElement.querySelector('.s').innerHTML =
+    yearly? 'aylık <b>'+fmt(c.tot)+'</b> teklif' : 'yıllık <b>'+fmt(c.tot*12)+'</b> teklif';
   if(S.mode!=="single"){
     const tb=document.querySelector('#xtab tbody'); tb.innerHTML='';
     const xc=document.getElementById('xcards'); xc.innerHTML='';
