@@ -177,14 +177,14 @@ window.SUNUM = {
     ],
     cmp: {
       t: "Özel fiyatın somut faydası",
-      d: "Özel Fiyat kullanan firmaların kampanyalı günlerini kampanyasız günleriyle karşılaştırdık.",
+      d: "Özel Fiyat'ı açan firmaların kampanya öncesi ve sonrası dönemlerini, mevsim etkisinden arındırarak karşılaştırdık.",
       count: "firma, son bir yılda boş günlerini Özel Fiyat sayesinde doldurdu.",
-      /* within-firm, all-lead-method comparison (see OZEL_FIYAT_METRICS.md):
-         daily rate with the campaign vs without, averaged over the 464 firms
-         whose campaign is complete */
+      /* season-adjusted before/after event study on ALL lead methods
+         (docs/OZEL_FIYAT_ONOFF_ALLLEADS.md): 2026 activations, n=345,
+         median ratios — total leads x1.09, page views x1.15 */
       stats: [
-        { v: "+%9", l: "iletişime geçen çift / ay", s: "ayda ortalama +4–5 çift" },
-        { v: "+%4", l: "sayfa görüntüleme / ay", s: "ayda ortalama +28 görüntüleme" }
+        { v: "+%9", l: "iletişime geçen çift / ay", s: "ayda ortalama +3–5 çift" },
+        { v: "+%15", l: "sayfa görüntüleme / ay", s: "ayda ortalama +74 görüntüleme" }
       ]
     },
     ads: [
