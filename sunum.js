@@ -341,12 +341,11 @@ PAGES.instagram = function (el) {
   var igRaw = (MKT.ig && MKT.ig.d30) || 0;
   var igAdj = Math.round(igRaw * 1.5 / 500) * 500;
   el.innerHTML =
-    '<div class="panel hero-tint"><h2>' + esc(I.hero) + "</h2><p>" + esc(I.lead) + "</p></div>" +
+    '<div class="panel hero-tint"><h2>' + esc(I.hero).replace("\n", "<br>") + "</h2></div>" +
     (igAdj ? '<div class="panel tint"><h2>' + esc(I.metricTitle) + "</h2>" +
       '<div class="cal-count" style="margin-top:6px"><span class="v num" data-count="' + igAdj +
       '">0</span><span class="l">' + esc(I.metricL) + "</span></div>" +
-      '<div class="note" style="margin-top:6px">' + esc(I.metricS) + "</div>" +
-      '<p style="margin:14px 0 0">' + esc(I.metricAside) + "</p></div>" : "") +
+      '<p class="ig-aside">' + esc(I.metricAside) + "</p></div>" : "") +
     '<div class="panel ask"><div class="ask-ic">' +
     '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
     '<path d="M4 5h16v10H9l-5 4V5z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg></div>' +
@@ -511,6 +510,34 @@ PAGES.verim = function (el) {
           "ne kadar sürede geri döndüğü</u> gibi çeşitli metriklere göre değişir.</span>" +
           "<small>Tüm rakamlar tahmini ortalamalardır — taahhüt değildir.</small>";
       });
+      /* wording: the venue never hears "simülasyon" */
+      var sub1 = doc.querySelector("#page1 .sub");
+      if (sub1) sub1.textContent = "Görüşeceğin mekanın bilgilerini seç, incelemeye başla.";
+      $$("#page1 .gobtn", doc).forEach(function (b) {
+        if (b.textContent.indexOf("Simülasyona geç") >= 0) b.textContent = "İncele →";
+      });
+      /* "Simülasyon: Winner 4X" -> "Paket: Winner 4X  [Değiştir]" — their code
+         rewrites the line on every code entry, so keep re-applying */
+      var line = doc.getElementById("simNameLine");
+      if (line) {
+        var fixing = false;
+        var fixLine = function () {
+          if (fixing) return;
+          fixing = true;
+          var t = line.textContent.replace(/\s*Değiştir\s*$/, "");
+          if (t.indexOf("Simülasyon:") === 0) t = "Paket:" + t.slice("Simülasyon:".length);
+          line.innerHTML = esc(t) + ' <button id="yss-change" style="border:0;background:none;' +
+            'color:var(--pink,#E21B71);text-decoration:underline;cursor:pointer;font:inherit;' +
+            'font-size:12px;font-weight:700;padding:0 0 0 6px">Değiştir</button>';
+          var ch = doc.getElementById("yss-change");
+          if (ch) ch.onclick = function () { doc.defaultView.showPage(0); };
+          fixing = false;
+        };
+        fixLine();
+        new doc.defaultView.MutationObserver(function () {
+          if (!fixing && line.textContent.indexOf("Simülasyon:") === 0) fixLine();
+        }).observe(line, { childList: true, characterData: true, subtree: true });
+      }
       /* the simulator flips page1/page2 by inline display — watch for it */
       var p2 = doc.getElementById("page2");
       new doc.defaultView.MutationObserver(function () {
@@ -896,7 +923,7 @@ function providerCard(pid, i) {
     '<div class="pgrid">' +
     m(p.pvPm, "aylık ortalama sayfa görüntüleme", n) +
     m(p.leadsPm, "aylık ortalama iletişime geçen çift", function (v) { return n(v, 1); }) +
-    m(p.igPm, "aylık Instagram'a geçiş", n) +
+    m(p.igPm, "aylık ortalama Instagram'a geçiş", n) +
     m(p.rr, "dönüş oranı", function (v) { return pct(v, 0); }) +
     m(p.in1h, "1 saat içinde dönüş", function (v) { return pct(v, 0); }) +
     m(p.avgH, "ort. dönüş süresi", function (v) { return n(v, 1) + " sa"; }) +

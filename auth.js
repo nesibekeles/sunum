@@ -88,6 +88,9 @@ function mountUserChip(user) {
   bar.appendChild(chip);
   document.getElementById("auth-out").addEventListener("click", function () {
     clearSession();
+    /* the simulator access code is per person, not per device: a logout must
+       force the next user to enter their own code */
+    try { localStorage.removeItem("yss_code"); } catch (e) {}
     location.reload();
   });
 }

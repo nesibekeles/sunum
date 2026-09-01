@@ -46,10 +46,8 @@ window.SUNUM = {
      rep asks the venue owner, each answer unlocking one of the arguments. The
      question index maps to a `moves` index on the card. */
   instagram: {
-    hero: "Çiftler mekan araştırmalarına Google'da başlar. Google'da da en üstte biz varız.",
-    lead: "\"Kır düğünü mekanları\", \"düğün salonu fiyatları\", \"İzmir düğün mekanı\" — " +
-      "çift ne yazarsa yazsın, karşısına ilk çıkan sonuçlardan biri Düğün.com. " +
-      "Yani sizi henüz tanımayan çift, sizi ilk burada görüyor.",
+    hero: "Çiftler mekan araştırmalarına ilk olarak Google'da başlar.\nGoogle'da da en üstte biz varız.",
+
     expTitle: "Küçük bir deney",
     expLead: "Dört kısa soru. Cevabı siz verin; biz sadece çiftlerin ne yaptığını gösterelim.",
     questions: [
@@ -83,9 +81,8 @@ window.SUNUM = {
        page and search Instagram themselves never press the button */
     metricTitle: "Düğün.com'dan Instagram'ınıza",
     metricL: "çift, son 30 günde Düğün.com'daki firma sayfalarından Instagram'a geçti",
-    metricS: "buton tıklamaları ×1,5 — sayfada görüp Instagram'da kendisi aratan çiftler de hesaba katıldı",
     metricAside: "Bir de sahadan sık duyduğumuz bir şey var: firmalarımız, Düğün.com'a üye " +
-      "olduktan sonra Instagram'dan gelen taleplerin de arttığını söylüyor. Bunu biz ölçmüyoruz — " +
+      "olduktan sonra Instagram'dan gelen taleplerin de arttığını söylüyor. Bunu biz ölçemiyoruz — " +
       "ama bu kadar sık duyunca aktarmadan geçmek istemedik.",
     /* the last word goes to the venue's own couples — an invitation, not a claim */
     askTitle: "En iyi kanıt sizin çiftlerinizde",
@@ -158,10 +155,9 @@ window.SUNUM = {
     },
     joker: {
       t: "Joker kartımız: Özel Fiyat",
-      d: "Belirli tarihler ya da belirli koşullar için özel fiyat tanımlarsınız. Kartınız " +
-         "listede rozetle farklılaşır, çift fiyatı görerek tıklar; kampanyanızı kendi reklam " +
-         "kanallarımızda da çiftlerin karşısına çıkarırız. Takviminizin boş kalan kısmını " +
-         "doldurmanın en hızlı yolu budur."
+      d: "Özel Fiyat kampanyası çıktığınızda, firma kartınız listede özel rozetle farklılaşır. " +
+         "Ayrıca kampanyanızın reklamını tüm sosyal medya kanallarımızdan çiftlerin karşısına " +
+         "çıkarırız. Takviminizin boş kalan kısmını doldurmanın en hızlı yolu budur."
     },
     /* `count` pulls the live figure from STORY.ozelFiyat.providers365 */
     facts: [
@@ -179,17 +175,16 @@ window.SUNUM = {
       { v: "Ek ücret yok", l: "hizmet pakete dahil",
         d: "Özel Fiyat ve reklam desteği için ayrıca ücret alınmaz." }
     ],
-    /* BI's on/off event study (docs/OZEL_FIYAT_ONOFF_RESULTS.md, 27.08.2026):
-       same firm, ±6 weeks around the campaign activation, season-adjusted,
-       2026 cohort (n=73). These figures are maintained by hand from that doc —
-       they do not come from the panel's own pull. */
     cmp: {
       t: "Özel fiyatın somut faydası",
-      d: "Özel Fiyat'ı açan firmalarda, açılıştan önceki ve sonraki verilerini karşılaştırdık.",
+      d: "Özel Fiyat kullanan firmaların kampanyalı günlerini kampanyasız günleriyle karşılaştırdık.",
       count: "firma, son bir yılda boş günlerini Özel Fiyat sayesinde doldurdu.",
+      /* within-firm, all-lead-method comparison (see OZEL_FIYAT_METRICS.md):
+         daily rate with the campaign vs without, averaged over the 464 firms
+         whose campaign is complete */
       stats: [
-        { v: "+%25", l: "organik iletişime geçen çift / ay", s: "tipik firmada ayda +3–4 çift" },
-        { v: "+%15", l: "sayfa görüntüleme / ay", s: "listede görünme ve tıklama da artıyor" }
+        { v: "+%9", l: "iletişime geçen çift / ay", s: "ayda ortalama +4–5 çift" },
+        { v: "+%4", l: "sayfa görüntüleme / ay", s: "ayda ortalama +28 görüntüleme" }
       ]
     },
     ads: [
