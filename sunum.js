@@ -942,7 +942,8 @@ function providerCard(pid, i) {
     m(p.igPm, "aylık ortalama Instagram'a geçiş", n) +
     m(p.rr, "dönüş oranı", function (v) { return pct(v, 0); }) +
     m(p.in1h, "1 saat içinde dönüş", function (v) { return pct(v, 0); }) +
-    m(p.avgH, "ort. dönüş süresi", function (v) { return n(v, 1) + " sa"; }) +
+    m(p.avgH, "tipik dönüş süresi", function (v) {
+      return v < 1 ? n(Math.round(v * 60)) + " dk" : n(v, 1) + " sa"; }) +
     m(p.gallery, "galeri sayısı", n) +
     m(p.reviews, "yorum sayısı", n) +
     m(p.campaigns, "aktif kampanya sayısı", n) +
