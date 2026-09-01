@@ -594,7 +594,7 @@ var regionState = { city: "İstanbul", cat: "Kır Düğünü", win: "y1", period
 
 PAGES.rakip = function (el) {
   var R = S.rakip;
-  var cities = cityList(REG.cities);
+  var cities = ["Türkiye"].concat(cityList(REG.cities));
   el.innerHTML =
     '<div class="panel"><h2>' + esc(R.marketTitle) + "</h2><p>" + esc(R.marketLead) + "</p>" +
     '<div class="grid g3" style="margin-top:16px">' +
@@ -621,7 +621,18 @@ PAGES.rakip = function (el) {
 };
 
 function regionCats(city) {
+  if (city === "Türkiye") {
+    return catList(REG.categories).filter(function (c) { return MKT.seg && MKT.seg["Türkiye|" + c]; });
+  }
   return catList(REG.categories).filter(function (c) { return REG.data[city + "|" + c]; });
+}
+/* Turkish locative suffix for the punch lines (İzmir'de, İstanbul'da, Türkiye'de) */
+function locDa(city) {
+  var last = "", i;
+  for (i = city.length - 1; i >= 0; i--) {
+    if ("aeıioöuüAEIİOÖUÜ".indexOf(city.charAt(i)) >= 0) { last = city.charAt(i).toLocaleLowerCase("tr"); break; }
+  }
+  return city + ("eiöü".indexOf(last) >= 0 ? "'de" : "'da");
 }
 function bindRegion() {
   function fillCats() {
@@ -663,7 +674,7 @@ function drawMarket(catOnly) {
     : ((seg && seg.couplesY) || 0);
   var catBox = '<div class="v num" data-count="' + catCouples + '">0</div>' +
     "<div class='l'>çift " + esc(regionState.cat.toLocaleLowerCase("tr")) + " tercih etti</div>";
-  var punch = esc(regionState.city) + "'da " + esc(label) + " döneminde <b>" + n(marriages) +
+  var punch = esc(locDa(regionState.city)) + " " + esc(label) + " döneminde <b>" + n(marriages) +
     "</b> evlilik var; bunların <b>" + n(onDc) + "</b> tanesi mekanını Düğün.com'da buldu. " +
     (catCouples ? "<b>" + n(catCouples) + "</b> çift " +
      esc(regionState.cat.toLocaleLowerCase("tr")) + " tercih etti." : "");
@@ -694,10 +705,11 @@ function winVal(block, win, cym) {
 }
 function drawRegion() {
   var out = $("#rg-out");
+  var isTR = regionState.city === "Türkiye";
   var key = regionState.city + "|" + regionState.cat;
   var seg = MKT.seg && MKT.seg[key];
   var cityT = MKT.cityTot && MKT.cityTot[regionState.city];
-  if (!seg || !cityT || !MKT.tr) {
+  if (!seg || !MKT.tr || (!isTR && !cityT)) {
     out.innerHTML = "<p style='color:var(--mute)'>Bu şehir ve kategori için veri yok.</p>"; return;
   }
   var cym = completedYM();
@@ -705,22 +717,26 @@ function drawRegion() {
 
   function funnel(title, metric) {
     var trV = winVal(MKT.tr[metric], regionState.win, cym);
-    var ciV = winVal(cityT[metric], regionState.win, cym);
     var sgV = winVal(seg[metric], regionState.win, cym);
+    /* Türkiye view: the middle (city) step has nothing to say — a dash card */
+    var mid = isTR
+      ? '<div class="f3"><div class="v">—</div><div class="l">il seçilmedi</div></div>'
+      : '<div class="f3"><div class="v num" data-count="' +
+        winVal(cityT[metric], regionState.win, cym) + '">0</div>' +
+        "<div class='l'>" + esc(regionState.city) + "</div></div>";
     return "<h3 style='margin:18px 0 10px'>" + esc(title) + "</h3>" +
       '<div class="funnel3">' +
       '<div class="f3"><div class="v num" data-count="' + trV + '">0</div>' +
-      "<div class='l'>Tüm Türkiye</div><div class='s'>tüm kategoriler</div></div>" +
-      '<div class="f3-arrow">→</div>' +
-      '<div class="f3"><div class="v num" data-count="' + ciV + '">0</div>' +
-      "<div class='l'>" + esc(regionState.city) + "</div><div class='s'>tüm kategoriler</div></div>" +
+      "<div class='l'>Tüm Türkiye</div></div>" +
+      '<div class="f3-arrow">→</div>' + mid +
       '<div class="f3-arrow">→</div>' +
       '<div class="f3 hi"><div class="v num" data-count="' + sgV + '">0</div>' +
       "<div class='l'>" + esc(regionState.city) + " · " + esc(regionState.cat) +
       "</div><div class='s'>" + esc(winLabel) + "</div></div></div>";
   }
 
-  out.innerHTML = funnel("Düğün.com trafiği", "sessions") + funnel("Firmalarla iletişime geçen çift", "offers") +
+  out.innerHTML = funnel("Düğün.com trafiği", "sessions") +
+    funnel("Çiftler kaç farklı firma ile iletişime geçti", "offers") +
     '<div class="punch" style="margin-top:18px">' + esc(regionState.city) + " · " +
     esc(regionState.cat) + " segmentinde <b>" + esc(winLabel) + "</b> döneminde <b>" +
     n(winVal(seg.sessions, regionState.win, cym)) + "</b> Düğün.com ziyareti oldu, <b>" +
