@@ -739,8 +739,8 @@ function drawRegion() {
     funnel("Çiftler kaç farklı firma ile iletişime geçti", "offers") +
     '<div class="punch" style="margin-top:18px">' + esc(regionState.city) + " · " +
     esc(regionState.cat) + " segmentinde <b>" + esc(winLabel) + "</b> döneminde <b>" +
-    n(winVal(seg.sessions, regionState.win, cym)) + "</b> Düğün.com ziyareti oldu, <b>" +
-    n(winVal(seg.offers, regionState.win, cym)) + "</b> çift firmalarla iletişime geçti.</div>";
+    n(winVal(seg.sessions, regionState.win, cym)) + "</b> Düğün.com ziyareti oldu, çiftler <b>" +
+    n(winVal(seg.offers, regionState.win, cym)) + "</b> firmayla iletişime geçti.</div>";
   countUp(out);
 }
 function stat(v, l, s, money) {
