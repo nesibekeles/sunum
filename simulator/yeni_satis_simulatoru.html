@@ -488,7 +488,7 @@ function render(){
   kpi('kIg',c.ig,"sayfadan Instagram'a geçen çift",true);
   document.getElementById('kTot').textContent=fmt(yearly? c.tot*12 : c.tot);
   document.getElementById('kTot').parentElement.querySelector('.s').innerHTML =
-    yearly? 'aylık <b>'+fmt(c.tot)+'</b>' : 'yıllık <b>'+fmt(c.tot*12)+'</b> teklif';
+    yearly? 'aylık <b>'+fmt(c.tot)+'</b>' : 'Yıllık <b>'+fmt(c.tot*12)+'</b>';
   if(S.mode!=="single"){
     const tb=document.querySelector('#xtab tbody'); tb.innerHTML='';
     const xc=document.getElementById('xcards'); xc.innerHTML='';
