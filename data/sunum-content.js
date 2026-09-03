@@ -40,42 +40,11 @@ window.SUNUM = {
       "anlaşma sağlayan çiftlerin son 1 haftalık verilerini görmektesiniz."
   },
 
-  /* The four arguments themselves live on the `instagram` objection card in
-     data/content.js and are shared with the panel's objection library. The
-     deck wraps them in a short, conversational experiment: three questions the
-     rep asks the venue owner, each answer unlocking one of the arguments. The
-     question index maps to a `moves` index on the card. */
+  /* The "Küçük bir deney" question flow was removed on 01.09.2026 — the page
+     is now hero + hand-off metric + the "En iyi kanıt" ask card. */
   instagram: {
     hero: "Çiftler mekan araştırmalarına ilk olarak Google'da başlar.\nGoogle'da da en üstte biz varız.",
 
-    expTitle: "Küçük bir deney",
-    expLead: "Dört kısa soru. Cevabı siz verin; biz sadece çiftlerin ne yaptığını gösterelim.",
-    questions: [
-      { q: "Akşam yemeği için yeni bir restoran arıyorsunuz. İlk nereye bakarsınız?",
-        a: ["Google'a yazarım", "Instagram'da ararım"],
-        react: ["Çoğu insan gibi. Çiftler de mekan ararken aynısını yapıyor.",
-                "Olabilir — ama Instagram'da aramak için adını bilmeniz gerekir. " +
-                "Adını bilmediğiniz bir mekanı nerede bulursunuz?"],
-        move: 1 },
-      { q: "Sizi hiç duymamış bir çift, Instagram'da sizi nasıl bulur?",
-        a: ["Keşfet ya da hashtag ile", "Bulamaz — adımı bilmesi gerekir"],
-        react: ["Keşfet, takip ettiği hesaplara benzeyenleri gösterir; sizi arayan çifte değil. " +
-                "Bilinmeyen bir mekan için bu bir piyango.",
-                "Tam olarak bu. Instagram sizi bilenlerin kanalı; sizi arayanların değil."],
-        move: 2 },
-      { q: "Instagram reklamınızı bu ay durdursanız ne olur?",
-        a: ["Trafik aynı kalır", "Trafik biter"],
-        react: ["Reklam trafiği, reklam bütçesiyle başlar ve onunla biter.",
-                "Evet. Reklam bir musluktur; kapattığınız an akış durur."],
-        move: 3 },
-      { q: "Peki Düğün.com sizin için Instagram'ın rakibi mi?",
-        a: ["Rakibi", "Değil"],
-        react: ["Öyle görünebilir — ama profilinizdeki Instagram butonu her gün size çift gönderiyor.",
-                "Değil. Profilinizden Instagram'ınıza geçen her çift, sizin takipçiniz oluyor."],
-        move: 0 }
-    ],
-    closing: "Düğün hazırlığında olan tüm çiftlerin ilk geldiği yer Düğün.com. Mekanınızı " +
-      "önceden duymamış olsa bile bütün çiftlerin karşısına çıkarsınız.",
     /* the Instagram hand-off metric; the raw figure (MARKET.ig.d30) is
        multiplied by 1.5 at render time — couples who see the handle on the
        page and search Instagram themselves never press the button */

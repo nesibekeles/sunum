@@ -326,15 +326,8 @@ function googleIcon() {
 }
 
 /* --------------------------------------------------------- 2. Instagram */
-/* A short experiment instead of a wall of arguments: the rep asks the venue
-   owner three everyday questions, and each answer unlocks one of the four
-   `moves` on the shared objection card (data/content.js) — so the argument
-   text still lives in one place. Either answer leads to the same insight;
-   the venue is never told it answered wrong. */
 PAGES.instagram = function (el) {
-  var O = (C.objections || []).filter(function (o) { return o.id === "instagram"; })[0];
   var I = S.instagram;
-  if (!O) { el.innerHTML = "<div class='panel'><p>İçerik bulunamadı.</p></div>"; return; }
 
   /* the hand-off metric: raw button clicks ×1.5 (couples who see the handle
      and search Instagram themselves never press the button) */
@@ -349,41 +342,8 @@ PAGES.instagram = function (el) {
     '<div class="panel ask"><div class="ask-ic">' +
     '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
     '<path d="M4 5h16v10H9l-5 4V5z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg></div>' +
-    "<div><h3>" + esc(I.askTitle) + "</h3><p style='margin:0'>" + esc(I.askText) + "</p></div></div>" +
-    '<div class="panel"><h2>' + esc(I.expTitle) + "</h2><p>" + esc(I.expLead) + "</p>" +
-    '<div class="exp" id="ig-exp">' + I.questions.map(function (q, i) {
-      return '<div class="exp-q' + (i === 0 ? " on" : "") + '" data-i="' + i + '">' +
-        '<div class="exp-no">' + (i + 1) + "</div>" +
-        '<div class="exp-body"><div class="exp-ask">' + esc(q.q) + "</div>" +
-        '<div class="exp-opts">' + q.a.map(function (a, j) {
-          return '<button class="chip" data-j="' + j + '">' + esc(a) + "</button>";
-        }).join("") + "</div>" +
-        '<div class="exp-reveal" hidden><p class="exp-react"></p>' +
-        '<div class="exp-move">' + O.moves[q.move] + "</div></div></div></div>";
-    }).join("") + "</div>" +
-    '<div class="punch" id="ig-close" hidden>' + esc(I.closing) + "</div></div>";
+    "<div><h3>" + esc(I.askTitle) + "</h3><p style='margin:0'>" + esc(I.askText) + "</p></div></div>";
   countUp(el);
-
-  $$("#ig-exp .exp-q").forEach(function (qEl) {
-    var i = +qEl.dataset.i, q = I.questions[i];
-    $$(".exp-opts .chip", qEl).forEach(function (b) {
-      b.addEventListener("click", function () {
-        $$(".exp-opts .chip", qEl).forEach(function (o) {
-          o.setAttribute("aria-pressed", o === b); o.disabled = true; });
-        var rv = $(".exp-reveal", qEl);
-        $(".exp-react", rv).textContent = q.react[+b.dataset.j];
-        rv.hidden = false;
-        qEl.classList.add("done");
-        var next = qEl.nextElementSibling;
-        if (next && next.classList.contains("exp-q")) {
-          next.classList.add("on");
-          setTimeout(function () { next.scrollIntoView({ behavior: "smooth", block: "center" }); }, 120);
-        } else {
-          $("#ig-close").hidden = false;
-        }
-      });
-    });
-  });
 };
 
 /* ------------------------------------------------------------ 3. Ortaklık */
