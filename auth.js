@@ -46,7 +46,7 @@ function buildGate() {
   wrap.innerHTML =
     '<div class="auth-card">' +
       '<img class="auth-logo" src="assets/logo-krem.svg" alt="düğün.com">' +
-      "<h1>" + (screenName() === "Sunum" ? "Satış Sunumu" : "Saha Satış Paneli") + "</h1>" +
+      "<h1>" + (screenName() === "Sunum" ? "Satış Küpü" : "Saha Satış Paneli") + "</h1>" +
       "<p class=\"auth-sub\">Devam etmek için düğün.com mail adresiniz ve şifrenizle giriş yapın.</p>" +
       '<form class="auth-form" id="auth-form" autocomplete="on">' +
         '<label class="auth-fld" for="auth-mail">Mail adresi</label>' +
