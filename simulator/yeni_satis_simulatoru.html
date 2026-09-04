@@ -314,11 +314,14 @@ const SCEN = {mid:"Beklenen", hi:"İyi senaryo"};
    mode the package is never named on screen.
    TODO: move this table to the sales user sheet and fetch it, like the login. */
 const SIM_CODES = {
-  "7412": {mode:"compare", XS:[2,4,6], name:"Paket karşılaştırma"},  /* 2X · 4X · 6X */
-  "3806": {mode:"single",  X:2, name:"Winner 2X"},   /* priority weight 70  */
-  "5127": {mode:"single",  X:3, name:"Pro Start"},   /* x_count 3, pw 75    */
-  "9243": {mode:"single",  X:4, name:"Winner 4X"},   /* priority weight 80  */
-  "6580": {mode:"single",  X:6, name:"Winner 6X"}    /* priority weight 100 */
+  "2460": {mode:"compare", XS:[2,4,6], name:"Paket karşılaştırma"},  /* 2X · 4X · 6X */
+  "2222": {mode:"single",  X:2, name:"Winner 2X"},   /* priority weight 70  */
+  "1111": {mode:"single",  X:3, name:"Pro Start"},   /* x_count 3, pw 75    */
+  "4444": {mode:"single",  X:4, name:"Winner 4X"},   /* priority weight 80  */
+  "6666": {mode:"single",  X:6, name:"Winner 6X"},   /* priority weight 100 */
+  /* Welcome: the upcoming product — modelled exactly like Winner 2X, only
+     the package name differs everywhere it is shown */
+  "0000": {mode:"single",  X:2, name:"Welcome"}
 };
 
 const S = {city:"İstanbul", grp:"Kır", dist:"", cust:null, X:4, ps:"Çok İyi", rt:"30 dk", rr:"%100", scen:"mid",
