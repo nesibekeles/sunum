@@ -292,8 +292,11 @@ PAGES.baslar = function (el) {
     "<option value=''>Tüm kategoriler</option>" +
     MAP.catGroups.map(function (g) { return "<option>" + esc(g.label) + "</option>"; }).join("") +
     "</select><div class='kapsam' id='map-cat-scope'></div></div></div>" +
-    '<div class="map-stats" id="map-stats"></div>' +
-    mapMarkup() +
+    '<div class="map-ticker" id="map-ticker"></div>' +
+    '<div class="map-flex" id="map-flex">' + mapMarkup() +
+    '<aside class="map-feed" id="map-feed" hidden>' +
+    '<div class="mf-head" id="mf-head"></div><div class="mf-list" id="mf-list"></div></aside></div>' +
+    '<div id="map-board"></div>' +
     '<div class="note" id="map-note">' + esc(B.mapInfo) + "</div></div>";
 
   el.innerHTML = h;
@@ -1063,6 +1066,9 @@ var MAP = (function () {
     totals: L.totals || {},
     catsAgg: L.cats || {},
     dists: L.dists || {},
+    prev: L.prev || {},
+    prevCats: L.prevCats || {},
+    prevDists: L.prevDists || {},
     cityGroups: L.cityGroups || [],
     catGroups: L.catGroups || []
   };
@@ -1116,32 +1122,9 @@ function mapAgo(day) {
   return day === 0 ? "bugün" : day === 1 ? "dün" : day + " gün önce";
 }
 
-/* the weekly counts panel above the map — priority-ordered:
-   hero = iletişim (with method split) + anlaşma · mid = ig/fav/yol/paylaşım ·
-   small = yorum + site */
-function drawMapStats() {
-  var host = $("#map-stats");
-  if (!host) return;
-  var s = mapScopeTotals();
-  var other = Math.max(0, s.lead - s.wa - s.call);
-  host.innerHTML =
-    '<div class="ms-hero">' +
-    '<div class="ms-big"><div class="v num" data-count="' + s.lead + '">0</div>' +
-    "<div class='l'>çift firmalarla iletişime geçti</div>" +
-    "<div class='split'>💬 WhatsApp <b>" + n(s.wa) + "</b> · 📞 Arama <b>" + n(s.call) +
-    "</b> · ✉️ Diğer <b>" + n(other) + "</b></div></div>" +
-    '<div class="ms-big deal"><div class="v num" data-count="' + s.deal + '">0</div>' +
-    "<div class='l'>anlaşma yapıldı</div><div class='split'>çiftin kendisinin onayladığı anlaşmalar</div></div></div>" +
-    '<div class="ms-mid">' +
-    [["ig", "Instagram hesabı açıldı"], ["fav", "favorilere eklendi"],
-     ["yol", "yol tarifi alındı"], ["paylas", "firma paylaşıldı"]].map(function (p) {
-      return '<div class="ms-chip">' + MAP_ICON[p[0]] + ' <b class="num" data-count="' +
-        s[p[0]] + '">0</b> ' + esc(p[1]) + "</div>";
-    }).join("") + "</div>" +
-    '<div class="ms-low">⭐ <b>' + n(s.yorum) + "</b> yorum yapıldı · 🌐 <b>" + n(s.site) +
-    "</b> kez firma sitesi açıldı</div>";
-  countUp(host);
-}
+/* The weekly counts panel that stood here (hero cards + chips) was removed on
+   04.09.2026 at Nes's request; mapScopeTotals() stays — the feed header and
+   the district popups still read it. */
 
 function drawScopeNotes() {
   var cs = $("#map-city-scope"), ct = $("#map-cat-scope");
@@ -1220,10 +1203,189 @@ function mapMarkup() {
 function stopMap() { if (mapTimer) { clearInterval(mapTimer); mapTimer = null; } }
 
 /* everything that reacts to a filter change, in one place */
+/* The pulse layer (ticker + notification feed + leaderboard) is still in
+   review: it renders only on localhost until Nes approves it for the live
+   deck. Flip this to `true` to ship it. */
+var MAP_PULSE = /^(localhost|127\.)/.test(location.hostname);
+var mapDistFocus = "";           /* district the feed is narrowed to */
 function mapRefresh() {
+  mapDistFocus = "";
   drawScopeNotes();
-  drawMapStats();
+  if (MAP_PULSE) { drawTicker(); drawBoard(); }
   startMap();
+  startFeed();
+}
+
+/* ---------- the pulse ticker: real week-over-week movers ----------------- */
+function mapDelta(cur, prevStore, key) {
+  var p = prevStore[key];
+  var pt = 0;
+  if (p) MAP_TYPES.forEach(function (t) { pt += p[t] || 0; });
+  if (!pt) return null;
+  return Math.round((cur - pt) / pt * 100);
+}
+function sumAll(s) {
+  var v = 0; MAP_TYPES.forEach(function (t) { v += (s && s[t]) || 0; }); return v;
+}
+function tickerItem(name, cur, d) {
+  return '<span class="tk-item">' + esc(name) + " <b>" + n(cur) + "</b>" +
+    (d === null ? "" :
+      ' <i class="' + (d >= 0 ? "up" : "down") + '">' + (d >= 0 ? "▲" : "▼") +
+      "%" + Math.abs(d) + "</i>") + "</span>";
+}
+function drawTicker() {
+  var host = $("#map-ticker");
+  if (!host) return;
+  var cities = mapScopeCities();
+  var list = cities || MAP.cityGroups.reduce(function (a, g) { return a.concat(g.cities); }, []);
+  var items = [];
+  /* category movers within the scope */
+  MAP.catGroups.forEach(function (g) {
+    var cur = 0, prevSum = 0;
+    list.forEach(function (c) {
+      cur += sumAll(MAP.catsAgg[c + "|" + g.label]);
+      prevSum += sumAll(MAP.prevCats && MAP.prevCats[c + "|" + g.label]);
+    });
+    if (!cur) return;
+    items.push(tickerItem(g.label, cur,
+      prevSum ? Math.round((cur - prevSum) / prevSum * 100) : null));
+  });
+  /* place movers: districts in single-city view, cities otherwise */
+  var single = cities && cities.length === 1 ? cities[0] : "";
+  if (single) {
+    Object.keys(MAP.dists).forEach(function (k) {
+      if (k.split("|")[0] !== single || k.split("|")[1] === "—") return;
+      var cur = sumAll(MAP.dists[k]);
+      if (cur < 20) return;
+      items.push(tickerItem(k.split("|")[1], cur, mapDelta(cur, MAP.prevDists || {}, k)));
+    });
+  } else {
+    list.forEach(function (c) {
+      var cur = sumAll(MAP.totals[c]);
+      if (!cur) return;
+      items.push(tickerItem(c, cur, mapDelta(cur, MAP.prev || {}, c)));
+    });
+  }
+  if (!items.length) { host.innerHTML = ""; return; }
+  var strip = items.join('<span class="tk-sep">·</span>');
+  host.innerHTML = '<div class="tk-strip"><div class="tk-run">' + strip +
+    '<span class="tk-sep">·</span>' + strip + "</div></div>";
+}
+
+/* ---------- leaderboard: the week's most active places ------------------- */
+function drawBoard() {
+  var host = $("#map-board");
+  if (!host) return;
+  var cities = mapScopeCities();
+  var single = cities && cities.length === 1 ? cities[0] : "";
+  var rows = [];
+  if (single) {
+    Object.keys(MAP.dists).forEach(function (k) {
+      var p = k.split("|");
+      if (p[0] !== single || p[1] === "—") return;
+      rows.push({ name: p[1], cur: sumAll(MAP.dists[k]),
+                  d: mapDelta(sumAll(MAP.dists[k]), MAP.prevDists || {}, k) });
+    });
+  } else {
+    var list = cities || MAP.cityGroups.reduce(function (a, g) { return a.concat(g.cities); }, []);
+    list.forEach(function (c) {
+      rows.push({ name: c, cur: sumAll(MAP.totals[c]),
+                  d: mapDelta(sumAll(MAP.totals[c]), MAP.prev || {}, c) });
+    });
+  }
+  rows = rows.filter(function (r) { return r.cur > 0; })
+             .sort(function (a, b) { return b.cur - a.cur; }).slice(0, 5);
+  if (rows.length < 2) { host.innerHTML = ""; return; }
+  var medals = ["🥇", "🥈", "🥉", "4", "5"];
+  var max = rows[0].cur;
+  host.innerHTML = '<div class="board"><h3>Bu haftanın en hareketlileri' +
+    (single ? " · " + esc(single) : "") + "</h3>" + rows.map(function (r, i) {
+      return '<div class="bd-row"><span class="rank">' + medals[i] + "</span>" +
+        "<span class='nm'>" + esc(r.name) + "</span>" +
+        '<span class="bar"><i style="width:' + Math.round(r.cur / max * 100) + '%"></i></span>' +
+        "<b>" + n(r.cur) + "</b>" +
+        (r.d === null ? "<span class='dlt'></span>" :
+          '<span class="dlt ' + (r.d >= 0 ? "up" : "down") + '">' +
+          (r.d >= 0 ? "▲" : "▼") + "%" + Math.abs(r.d) + "</span>") + "</div>";
+    }).join("") + '<div class="bd-note">toplam etkileşim · geçen haftaya göre</div></div>';
+}
+
+/* ---------- the notification feed (single-city view) --------------------- */
+var feedTimer = null;
+function stopFeed() { if (feedTimer) { clearInterval(feedTimer); feedTimer = null; } }
+function feedTime(e, i) {
+  var h = 9 + (i * 7) % 13, m = (i * 13) % 60;
+  var hm = (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+  return mapAgo(e.day || 0) + " " + hm;
+}
+function feedItemHtml(e, i) {
+  var label = MAP.labels[e.t] || "";
+  var line = e.couple ? "<b>" + esc(e.couple) + "</b> " + esc(label) : esc(label);
+  return '<div class="mf-item"><span class="ic">' + MAP_ICON[e.t] + "</span>" +
+    "<div><div class='tx'>" + line + "</div>" +
+    "<div class='meta'>" + esc(e.name) + (e.d ? " · " + esc(e.d) : "") +
+    " · " + esc(feedTime(e, i)) + "</div></div></div>";
+}
+function startFeed() {
+  stopFeed();
+  var panel = $("#map-feed"), listEl = $("#mf-list"), head = $("#mf-head");
+  var flex = $("#map-flex");
+  if (!panel || !listEl) return;
+  var cities = mapScopeCities();
+  var single = cities && cities.length === 1 ? cities[0] : "";
+  if (!MAP_PULSE || !single) {
+    panel.hidden = true;
+    if (flex) flex.classList.remove("split");
+    return;
+  }
+  panel.hidden = false;
+  if (flex) flex.classList.add("split");
+  var catG = mapScopeCats();
+  var evs = MAP.events.filter(function (e) {
+    return e.city === single &&
+      (!catG || catG.cats.indexOf(e.cat) >= 0) &&
+      (!mapDistFocus || e.d === mapDistFocus);
+  });
+  /* week total for the header */
+  var tot = mapDistFocus
+    ? sumAll(MAP.dists[single + "|" + mapDistFocus])
+    : sumAll(mapScopeTotals());
+  head.innerHTML = "<b>" + esc(single) + (mapDistFocus ? " · " + esc(mapDistFocus) : "") +
+    "</b><span class='cnt'>" + n(tot) + " etkileşim / hafta</span>" +
+    (mapDistFocus ? '<button type="button" class="mf-all" id="mf-all">✕ tüm ilçeler</button>' : "");
+  var allBtn = $("#mf-all");
+  if (allBtn) allBtn.addEventListener("click", function () {
+    mapDistFocus = "";
+    var pop = $("#dist-pop"); if (pop) pop.hidden = true;
+    startFeed();
+  });
+  listEl.innerHTML = "";
+  if (!evs.length) {
+    listEl.innerHTML = "<div class='mf-empty'>Bu seçim için akış kaydı yok.</div>";
+    return;
+  }
+  /* newest-looking first: today, then yesterday, ... */
+  evs = evs.slice().sort(function (a, b) { return (a.day || 0) - (b.day || 0); });
+  var shown = 0, FIRST = 10;
+  function add(front) {
+    var e = evs[shown % evs.length];
+    var div = document.createElement("div");
+    div.innerHTML = feedItemHtml(e, shown);
+    var node = div.firstChild;
+    if (front && listEl.firstChild) {
+      node.classList.add("drop");
+      listEl.insertBefore(node, listEl.firstChild);
+      while (listEl.children.length > 30) listEl.lastChild.remove();
+    } else {
+      listEl.appendChild(node);
+    }
+    shown++;
+  }
+  for (var i = 0; i < Math.min(FIRST, evs.length); i++) add(false);
+  feedTimer = setInterval(function () {
+    if (!document.body.contains(listEl)) { stopFeed(); return; }
+    add(true);
+  }, 4200);
 }
 
 /* ---- zoom: animate the SVG viewBox to a window around one city ---------- */
@@ -1292,6 +1454,8 @@ function drawDistricts(city, zoomW, box) {
     node.addEventListener("click", function (ev) {
       ev.stopPropagation();
       showDistPop(r, ev);
+      mapDistFocus = r.d;          /* the feed narrows to this district */
+      startFeed();
     });
     g.appendChild(node);
   });
