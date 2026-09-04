@@ -286,6 +286,51 @@ label.fld { display: block; font-size: 11.5px; font-weight: 800; color: var(--mu
   font-size: 16px; line-height: 1.6; margin-top: 18px; }
 
 /* ------------------------------------------------------------------ the map */
+/* filter scope note under the two dropdowns */
+.kapsam { color: var(--mute); font-size: 11.5px; margin-top: 5px; min-height: 15px;
+  line-height: 1.4; }
+
+/* weekly counts, priority-ordered: two hero cards, four mid chips, one low line */
+.map-stats { margin-top: 16px; }
+.ms-hero { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; }
+.ms-big { background: linear-gradient(150deg, #FFF6F9, #fff); border: 1px solid var(--soft-pink);
+  border-radius: 14px; padding: 14px 18px; }
+.ms-big .v { font-size: clamp(26px, 3vw, 38px); font-weight: 800; letter-spacing: -.03em;
+  color: var(--ink); line-height: 1.05; }
+.ms-big .l { font-weight: 700; margin-top: 2px; }
+.ms-big .split { color: var(--mute); font-size: 12.5px; margin-top: 7px; }
+.ms-big .split b { color: var(--ink); }
+.ms-big.deal { background: linear-gradient(150deg, #E21B71, #B01055); border: 0; }
+.ms-big.deal .v, .ms-big.deal .l { color: #fff; }
+.ms-big.deal .split { color: rgba(255,255,255,.75); }
+.ms-mid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.ms-chip { background: #fff; border: 1px solid var(--line-2); border-radius: 999px;
+  padding: 7px 13px; font-size: 13px; }
+.ms-chip b { font-size: 14.5px; }
+.ms-low { color: var(--mute); font-size: 12px; margin-top: 9px; }
+@media (max-width: 700px) { .ms-hero { grid-template-columns: 1fr; } }
+
+/* the zoomed city's district cloud */
+.s-dist { cursor: pointer; }
+.s-dist circle { fill: rgba(226,27,113,.18); stroke: var(--pink); stroke-width: .7;
+  transition: fill .15s; }
+.s-dist:hover circle { fill: rgba(226,27,113,.34); }
+.s-dist text { fill: #7A2249; font-weight: 700; text-anchor: middle;
+  paint-order: stroke; stroke: #fff; stroke-width: 2.2px; }
+
+/* district popup */
+.dist-pop { position: absolute; z-index: 6; background: #fff; border-radius: 14px;
+  box-shadow: var(--sh-2); border: 1px solid var(--line-2); padding: 12px 15px;
+  min-width: 240px; font-size: 13px; }
+.dist-pop b { font-size: 13.5px; }
+.dist-pop .w { float: right; color: var(--mute); font-size: 11px; margin-left: 10px; }
+.dist-pop .row { margin-top: 6px; }
+.dist-pop .row.hi { font-size: 14px; }
+.dist-pop .row.hi b { color: var(--pink); font-size: 16px; }
+.dist-pop .row.sub { color: var(--mute); font-size: 12px; margin-top: 2px; }
+.dist-pop .row.low { color: var(--mute); font-size: 11.5px; border-top: 1px dashed var(--line-2);
+  padding-top: 6px; }
+
 .s-map-wrap { position: relative; border-radius: var(--r-card); overflow: hidden;
   background: linear-gradient(165deg, #F7FAFD, #FDFBF8); border: 1px solid var(--line-2);
   padding: 18px 16px 26px; margin-top: 16px; }

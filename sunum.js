@@ -160,7 +160,8 @@ function currentUser() {
   var team = (u.team || "").trim();
   var dept = (u.dept || "").trim();
   var isSales = dept ? CFG.fold(dept) === "satis" : (team === "MoS" || team === "SAS");
-  return { name: u.name || "", team: team, dept: dept, isSales: isSales };
+  return { name: u.name || "", team: team, dept: dept, isSales: isSales,
+           city: (u.city || "").trim() };
 }
 
 /* Restrained line icons — 24x24, single stroke, currentColor. */
@@ -284,12 +285,15 @@ PAGES.baslar = function (el) {
     "<h2 style='margin:0'>" + esc(B.mapTitle) + '</h2>' +
     '<span class="live-badge week"><i></i>SON 1 HAFTA</span></div>' +
     '<div class="grid g2" style="margin-top:16px">' +
-    "<div><label class='fld'>Şehir</label><select id='map-city'><option value=''>Tüm şehirler</option>" +
-    mapCities().map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("") +
-    "</select></div><div><label class='fld'>Kategori</label><select id='map-cat'>" +
+    "<div><label class='fld'>Şehir</label><select id='map-city'><option value=''>Tüm Türkiye</option>" +
+    MAP.cityGroups.map(function (g) { return "<option>" + esc(g.label) + "</option>"; }).join("") +
+    "</select><div class='kapsam' id='map-city-scope'></div></div>" +
+    "<div><label class='fld'>Kategori</label><select id='map-cat'>" +
     "<option value=''>Tüm kategoriler</option>" +
-    mapCats().map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("") +
-    "</select></div></div>" + mapMarkup() +
+    MAP.catGroups.map(function (g) { return "<option>" + esc(g.label) + "</option>"; }).join("") +
+    "</select><div class='kapsam' id='map-cat-scope'></div></div></div>" +
+    '<div class="map-stats" id="map-stats"></div>' +
+    mapMarkup() +
     '<div class="note" id="map-note">' + esc(B.mapInfo) + "</div></div>";
 
   el.innerHTML = h;
@@ -299,21 +303,18 @@ PAGES.baslar = function (el) {
   }
   $("#g-go").addEventListener("click", search);
   $("#g-q").addEventListener("keydown", function (e) { if (e.key === "Enter") search(); });
-  $("#map-city").addEventListener("change", startMap);
-  $("#map-cat").addEventListener("change", startMap);
-  startMap();
+  $("#map-city").addEventListener("change", mapRefresh);
+  $("#map-cat").addEventListener("change", mapRefresh);
 
-  /* If a sheet is configured it lands a moment later and takes over. The
-     built-in feed is already on screen by then, so the map never starts empty. */
-  loadMapSheet(function () {
-    var cs = $("#map-city"), ct = $("#map-cat");
-    if (!cs || !ct) return;
-    cs.innerHTML = "<option value=''>Tüm şehirler</option>" +
-      mapCities().map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("");
-    ct.innerHTML = "<option value=''>Tüm kategoriler</option>" +
-      mapCats().map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("");
-    startMap();
-  });
+  /* a sales user starts zoomed into their own city when the login sheet
+     carries one (the "Şehir" column; optional, the map works without it) */
+  var u = currentUser();
+  if (u && (u.team === "SAS" || u.team === "MoS") && u.city) {
+    var mine = mapGroupOfCity(u.city);
+    if (mine) $("#map-city").value = mine;
+  }
+  mapRefresh();
+  loadMapSheet(mapRefresh);
 };
 
 function googleIcon() {
@@ -1055,19 +1056,103 @@ function drawStory(user, maker) {
 var mapTimer = null;
 
 var MAP = (function () {
-  var raw = (window.LIVEMAP && window.LIVEMAP.events) || [];
+  var L = window.LIVEMAP || {};
   return {
-    labels: (window.LIVEMAP && window.LIVEMAP.labels) ||
-            { teklif: "adlı çift iletişime geçti", anlasma: "adlı çift ile anlaşma yapıldı!" },
-    events: raw.filter(function (e) { return CFG.cityAllowed(e.city) && CFG.catAllowed(e.cat); })
+    labels: L.labels || {},
+    events: L.events || [],
+    totals: L.totals || {},
+    catsAgg: L.cats || {},
+    dists: L.dists || {},
+    cityGroups: L.cityGroups || [],
+    catGroups: L.catGroups || []
   };
 })();
 
-function mapCities() { return cityList(MAP.events.map(function (e) { return e.city; })); }
-function mapCats() {
-  var out = [];
-  MAP.events.forEach(function (e) { if (out.indexOf(e.cat) < 0) out.push(e.cat); });
-  return out.sort();
+/* interaction types in their display-priority order */
+var MAP_TYPES = ["lead", "wa", "call", "deal", "ig", "yol", "fav", "paylas", "yorum", "site"];
+var MAP_ICON = { lead: "✉️", wa: "💬", call: "📞", deal: "🤝", ig: "📸",
+  yol: "📍", fav: "❤️", paylas: "🔗", yorum: "⭐", site: "🌐" };
+
+function mapGroupOfCity(city) {
+  var f = CFG.fold(city);
+  for (var i = 0; i < MAP.cityGroups.length; i++) {
+    var g = MAP.cityGroups[i];
+    if (CFG.fold(g.label) === f) return g.label;
+    for (var j = 0; j < g.cities.length; j++) {
+      if (CFG.fold(g.cities[j]) === f) return g.label;
+    }
+  }
+  return "";
+}
+function mapScopeCities() {
+  var v = $("#map-city") ? $("#map-city").value : "";
+  if (!v) return null;                                  /* null = all */
+  var g = MAP.cityGroups.filter(function (x) { return x.label === v; })[0];
+  return g ? g.cities : [v];
+}
+function mapScopeCats() {
+  var v = $("#map-cat") ? $("#map-cat").value : "";
+  if (!v) return null;
+  var g = MAP.catGroups.filter(function (x) { return x.label === v; })[0];
+  return g ? { label: v, cats: g.cats } : null;
+}
+
+/* real weekly sums for the selected scope */
+function mapScopeTotals() {
+  var cities = mapScopeCities();
+  var catG = mapScopeCats();
+  var list = cities || MAP.cityGroups.reduce(function (a, g) { return a.concat(g.cities); }, []);
+  var out = {};
+  MAP_TYPES.forEach(function (t) { out[t] = 0; });
+  list.forEach(function (c) {
+    var src = catG ? MAP.catsAgg[c + "|" + catG.label] : MAP.totals[c];
+    if (!src) return;
+    MAP_TYPES.forEach(function (t) { out[t] += src[t] || 0; });
+  });
+  return out;
+}
+
+function mapAgo(day) {
+  return day === 0 ? "bugün" : day === 1 ? "dün" : day + " gün önce";
+}
+
+/* the weekly counts panel above the map — priority-ordered:
+   hero = iletişim (with method split) + anlaşma · mid = ig/fav/yol/paylaşım ·
+   small = yorum + site */
+function drawMapStats() {
+  var host = $("#map-stats");
+  if (!host) return;
+  var s = mapScopeTotals();
+  var other = Math.max(0, s.lead - s.wa - s.call);
+  host.innerHTML =
+    '<div class="ms-hero">' +
+    '<div class="ms-big"><div class="v num" data-count="' + s.lead + '">0</div>' +
+    "<div class='l'>çift firmalarla iletişime geçti</div>" +
+    "<div class='split'>💬 WhatsApp <b>" + n(s.wa) + "</b> · 📞 Arama <b>" + n(s.call) +
+    "</b> · ✉️ Diğer <b>" + n(other) + "</b></div></div>" +
+    '<div class="ms-big deal"><div class="v num" data-count="' + s.deal + '">0</div>' +
+    "<div class='l'>anlaşma yapıldı</div><div class='split'>çiftin kendisinin onayladığı anlaşmalar</div></div></div>" +
+    '<div class="ms-mid">' +
+    [["ig", "Instagram hesabı açıldı"], ["fav", "favorilere eklendi"],
+     ["yol", "yol tarifi alındı"], ["paylas", "firma paylaşıldı"]].map(function (p) {
+      return '<div class="ms-chip">' + MAP_ICON[p[0]] + ' <b class="num" data-count="' +
+        s[p[0]] + '">0</b> ' + esc(p[1]) + "</div>";
+    }).join("") + "</div>" +
+    '<div class="ms-low">⭐ <b>' + n(s.yorum) + "</b> yorum yapıldı · 🌐 <b>" + n(s.site) +
+    "</b> kez firma sitesi açıldı</div>";
+  countUp(host);
+}
+
+function drawScopeNotes() {
+  var cs = $("#map-city-scope"), ct = $("#map-cat-scope");
+  if (cs) {
+    var cities = mapScopeCities();
+    cs.textContent = (cities && cities.length > 1) ? "Kapsam: " + cities.join(" · ") : "";
+  }
+  if (ct) {
+    var g = mapScopeCats();
+    ct.textContent = (g && g.cats.length > 1) ? "Kapsam: " + g.cats.join(" · ") : "";
+  }
 }
 
 /* --- the optional sheet ------------------------------------------------- */
@@ -1117,7 +1202,7 @@ function loadMapSheet(onDone) {
       var e = {
         city: cell("city"), d: cell("d"), name: cell("name"), cat: cell("cat"),
         img: cell("img"), couple: cell("couple"), ago: cell("ago"),
-        t: CFG.fold(cell("t")).indexOf("anlas") >= 0 ? "anlasma" : "teklif"
+        t: CFG.fold(cell("t")).indexOf("anlas") >= 0 ? "deal" : "lead"
       };
       if (e.city && e.name && CFG.cityAllowed(e.city) && CFG.catAllowed(e.cat)) out.push(e);
     });
@@ -1127,11 +1212,108 @@ function loadMapSheet(onDone) {
 
 function mapMarkup() {
   var M = C.turkeyMap;
-  return '<div class="s-map-wrap"><svg viewBox="' + M.viewBox + '" preserveAspectRatio="xMidYMid meet">' +
-    '<path class="s-land" d="' + M.d + '"/><g id="s-pins"></g></svg>' +
-    '<div class="s-bubs" id="s-bubs"></div></div>';
+  return '<div class="s-map-wrap"><svg id="s-mapsvg" viewBox="' + M.viewBox + '" preserveAspectRatio="xMidYMid meet">' +
+    '<path class="s-land" d="' + M.d + '"/><g id="s-pins"></g><g id="s-dists"></g></svg>' +
+    '<div class="s-bubs" id="s-bubs"></div>' +
+    '<div class="dist-pop" id="dist-pop" hidden></div></div>';
 }
 function stopMap() { if (mapTimer) { clearInterval(mapTimer); mapTimer = null; } }
+
+/* everything that reacts to a filter change, in one place */
+function mapRefresh() {
+  drawScopeNotes();
+  drawMapStats();
+  startMap();
+}
+
+/* ---- zoom: animate the SVG viewBox to a window around one city ---------- */
+var mapZoomAnim = null;
+function mapSetView(box) {
+  var svg = $("#s-mapsvg");
+  if (!svg) return;
+  var cur = svg.getAttribute("viewBox").split(" ").map(Number);
+  if (mapZoomAnim) cancelAnimationFrame(mapZoomAnim);
+  /* rAF is frozen in hidden tabs — land on the target instantly there */
+  if (document.hidden) { svg.setAttribute("viewBox", box.join(" ")); return; }
+  var t0 = null;
+  function step(ts) {
+    if (!t0) t0 = ts;
+    var k = Math.min(1, (ts - t0) / 480);
+    k = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   /* easeInOut */
+    svg.setAttribute("viewBox", cur.map(function (v, i) {
+      return (v + (box[i] - v) * k).toFixed(1);
+    }).join(" "));
+    if (k < 1) mapZoomAnim = requestAnimationFrame(step);
+  }
+  mapZoomAnim = requestAnimationFrame(step);
+}
+
+/* the district cloud around a zoomed city: real weekly totals per district,
+   laid out on a deterministic spiral (positions are presentational — district
+   coordinates are not geographic) */
+function drawDistricts(city, zoomW, box) {
+  var M = C.turkeyMap, g = $("#s-dists"), pop = $("#dist-pop");
+  if (!g) return;
+  g.innerHTML = "";
+  if (pop) pop.hidden = true;
+  if (!city) return;
+  var p = M.cities[city];
+  if (!p) return;
+  var catG = mapScopeCats();
+  var rows = [];
+  Object.keys(MAP.dists).forEach(function (k) {
+    var parts = k.split("|");
+    if (parts[0] !== city || parts[1] === "—") return;
+    var s = MAP.dists[k], tot = 0;
+    MAP_TYPES.forEach(function (t) { tot += s[t] || 0; });
+    if (tot > 0) rows.push({ d: parts[1], s: s, tot: tot });
+  });
+  rows.sort(function (a, b) { return b.tot - a.tot; });
+  rows = rows.slice(0, 14);
+  if (!rows.length) return;
+  var max = rows[0].tot;
+  rows.forEach(function (r, i) {
+    /* golden-angle spiral around the city point, scaled to the zoom window */
+    var ang = i * 2.39996, rad = zoomW * (0.055 + 0.028 * Math.sqrt(i));
+    var x = p[0] + Math.cos(ang) * rad * 1.25;
+    var y = p[1] + Math.sin(ang) * rad * 0.78;
+    var rr = zoomW * (0.014 + 0.028 * Math.sqrt(r.tot / max));
+    if (box) {           /* keep bubble + label inside the zoomed window */
+      var mx = rr + Math.max(zoomW * 0.05, r.d.length * zoomW * 0.0065),
+          my = rr + zoomW * 0.035;
+      x = Math.max(box[0] + mx, Math.min(box[0] + box[2] - mx, x));
+      y = Math.max(box[1] + my + zoomW * 0.03, Math.min(box[1] + box[3] - my, y));
+    }
+    var node = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    node.setAttribute("class", "s-dist");
+    node.innerHTML = '<circle cx="' + x + '" cy="' + y + '" r="' + rr + '"/>' +
+      '<text x="' + x + '" y="' + (y - rr - zoomW * 0.008) + '" font-size="' + (zoomW * 0.022) + '">' +
+      esc(r.d) + "</text>";
+    node.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      showDistPop(r, ev);
+    });
+    g.appendChild(node);
+  });
+
+  function showDistPop(r, ev) {
+    if (!pop) return;
+    var s = r.s, other = Math.max(0, (s.lead || 0) - (s.wa || 0) - (s.call || 0));
+    pop.innerHTML = "<b>" + esc(city) + " · " + esc(r.d) + "</b><span class='w'>son 1 hafta</span>" +
+      "<div class='row hi'>✉️ İletişime geçen çift <b>" + n(s.lead || 0) + "</b></div>" +
+      "<div class='row sub'>💬 WhatsApp " + n(s.wa || 0) + " · 📞 Arama " + n(s.call || 0) +
+      " · diğer " + n(other) + "</div>" +
+      "<div class='row hi'>🤝 Anlaşma <b>" + n(s.deal || 0) + "</b></div>" +
+      "<div class='row'>📸 Instagram " + n(s.ig || 0) + " · ❤️ Favori " + n(s.fav || 0) + "</div>" +
+      "<div class='row'>📍 Yol tarifi " + n(s.yol || 0) + " · 🔗 Paylaşım " + n(s.paylas || 0) + "</div>" +
+      "<div class='row low'>⭐ Yorum " + n(s.yorum || 0) + " · 🌐 Site " + n(s.site || 0) + "</div>";
+    pop.hidden = false;
+    var wrap = pop.parentElement.getBoundingClientRect();
+    var x = ev.clientX - wrap.left, y = ev.clientY - wrap.top;
+    pop.style.left = Math.min(x, wrap.width - pop.offsetWidth - 8) + "px";
+    pop.style.top = Math.max(8, y - pop.offsetHeight - 12) + "px";
+  }
+}
 
 /* One balloon at a time — two at once overlap on the western pins — and the
    whole feed rotates through, consecutive balloons moving between cities. */
@@ -1141,12 +1323,30 @@ function startMap() {
   stopMap();
   var M = C.turkeyMap, host = $("#s-bubs"), pinHost = $("#s-pins");
   if (!host || !pinHost) return;
-  var city = $("#map-city") ? $("#map-city").value : "";
-  var cat = $("#map-cat") ? $("#map-cat").value : "";
+  var cities = mapScopeCities();               /* null = all */
+  var catG = mapScopeCats();
   var evs = MAP.events.filter(function (e) {
-    return (!city || e.city === city) && (!cat || e.cat === cat);
+    return (!cities || cities.indexOf(e.city) >= 0) &&
+           (!catG || catG.cats.indexOf(e.cat) >= 0);
   });
   host.innerHTML = "";
+
+  /* zoom in when exactly one city is on scope, back out otherwise */
+  var vb0 = M.viewBox.split(" ").map(Number);
+  var single = cities && cities.length === 1 ? cities[0] : "";
+  var zoomW = vb0[2] * 0.34;
+  if (single && M.cities[single]) {
+    var zc = M.cities[single], zh = zoomW * vb0[3] / vb0[2];
+    var zbox = [
+      Math.max(0, Math.min(vb0[2] - zoomW, zc[0] - zoomW / 2)),
+      Math.max(0, Math.min(vb0[3] - zh, zc[1] - zh / 2)), zoomW, zh];
+    mapSetView(zbox);
+    drawDistricts(single, zoomW, zbox);
+  } else {
+    mapSetView(vb0);
+    drawDistricts("", 0, null);
+  }
+
   if (!evs.length) {
     pinHost.innerHTML = "";
     host.innerHTML = "<div class='note' style='position:absolute;left:0;top:0'>Bu seçim için kayıt yok.</div>";
@@ -1154,13 +1354,14 @@ function startMap() {
   }
   var pins = [];
   evs.forEach(function (e) { if (pins.indexOf(e.city) < 0) pins.push(e.city); });
-  pinHost.innerHTML = pins.map(function (c) {
+  /* under zoom the city dot duplicates the district cloud — hide it */
+  pinHost.innerHTML = single ? "" : pins.map(function (c) {
     var p = M.cities[c];
     return p ? '<g class="s-pin"><circle class="halo" cx="' + p[0] + '" cy="' + p[1] +
       '" r="22"/><circle class="dot" cx="' + p[0] + '" cy="' + p[1] + '" r="7"/></g>' : "";
   }).join("");
 
-  var vb = M.viewBox.split(" "), VW = +vb[2], VH = +vb[3];
+  var VW = vb0[2], VH = vb0[3];
   /* round-robin across cities so consecutive balloons are not all in one place */
   var byCity = {}, order = [];
   evs.forEach(function (e) {
@@ -1217,19 +1418,26 @@ function startMap() {
     var p = M.cities[e.city];
     if (!p) return;
     var el = document.createElement("div");
-    var xp = p[0] / VW * 100, yp = p[1] / VH * 100;
-    el.className = "s-bub " + (e.t === "anlasma" ? "deal " : "") +
+    /* project through the CURRENT viewBox so balloons land right under zoom */
+    var svg = $("#s-mapsvg");
+    var vb = svg ? svg.getAttribute("viewBox").split(" ").map(Number) : [0, 0, VW, VH];
+    var xp = (p[0] - vb[0]) / vb[2] * 100, yp = (p[1] - vb[1]) / vb[3] * 100;
+    xp = Math.max(4, Math.min(96, xp)); yp = Math.max(6, Math.min(94, yp));
+    el.className = "s-bub " + (e.t === "deal" ? "deal " : "") +
       (yp < 42 ? "below " : "") + (xp < 20 ? "alignL" : xp > 80 ? "alignR" : "");
     el.style.left = xp + "%"; el.style.top = yp + "%";
+    var label = MAP.labels[e.t] || "";
+    var act = MAP_ICON[e.t] + " " +
+      (e.couple ? esc(e.couple) + " " + esc(label) : esc(label));
+    var ago = e.ago || (typeof e.day === "number" ? mapAgo(e.day) : "");
     /* Same shape as the card on dugun.com: cover, city, provider, category. */
     el.innerHTML = '<div class="box"><div class="hd">' +
       '<img class="ph" alt="" src="' + esc(e.img || "") + '">' +
       '<div class="tx"><span class="city">' + esc(e.city) +
       (e.d ? " · " + esc(e.d) : "") + "</span>" +
       "<b>" + esc(e.name) + '</b><span class="cat">' + esc(e.cat) + "</span></div></div>" +
-      '<div class="act">' + (e.t === "anlasma" ? "🤝 " : "✉️ ") +
-      (e.couple ? esc(e.couple) + " " : "") + esc(MAP.labels[e.t]) +
-      (e.ago ? " <i>" + esc(e.ago) + "</i>" : "") + "</div></div>";
+      '<div class="act">' + act +
+      (ago ? " <i>" + esc(ago) + "</i>" : "") + "</div></div>";
     host.appendChild(el);
     /* A missing cover must not leave a broken-image icon on a customer's
        screen — swap in the venue's initial on the brand gradient instead. */
