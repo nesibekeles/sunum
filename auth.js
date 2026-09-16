@@ -159,6 +159,16 @@ function start() {
       btn.textContent = "Giriş Yap";
       if (!res || !res.ok) return fail((res && res.message) || "Giriş yapılamadı.");
       writeSession({ user: res.user, exp: res.exp, token: res.token });
+      /* fire-and-forget: the success log is written by this beacon so the
+         login response itself never waits on Sheets appends */
+      try {
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "loginlog", token: res.token,
+                                 screen: screenName(), ua: navigator.userAgent })
+        })["catch"](function () {});
+      } catch (e) {}
       window.CURRENT_USER = res.user;
       document.documentElement.classList.remove("auth-locked");
       gate.classList.add("out");
