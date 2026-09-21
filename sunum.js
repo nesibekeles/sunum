@@ -258,6 +258,9 @@ function openTopic(id, fromEl) {
 }
 function goHome() {
   stopMap();
+  var clf = $("#cl-frame");
+  if (clf) clf.remove();
+  clModal(false);
   $("#s-sim-home").hidden = true;
   if (simObserver) { try { simObserver.disconnect(); } catch (e) {} simObserver = null; }
   $("#s-topic").hidden = true;
@@ -281,23 +284,16 @@ PAGES.baslar = function (el) {
     '<input type="text" id="g-q" value="düğün mekanları">' +
     '<button class="btn" id="g-go">Ara</button></div></div>';
 
-  h += '<div class="panel"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
-    "<h2 style='margin:0'>" + esc(B.mapTitle) + '</h2>' +
-    '<span class="live-badge week"><i></i>SON 1 HAFTA</span></div>' +
-    '<div class="grid g2" style="margin-top:16px">' +
-    "<div><label class='fld'>Şehir</label><select id='map-city'><option value=''>Tüm Türkiye</option>" +
-    MAP.cityGroups.map(function (g) { return "<option>" + esc(g.label) + "</option>"; }).join("") +
-    "</select><div class='kapsam' id='map-city-scope'></div></div>" +
-    "<div><label class='fld'>Kategori</label><select id='map-cat'>" +
-    "<option value=''>Tüm kategoriler</option>" +
-    MAP.catGroups.map(function (g) { return "<option>" + esc(g.label) + "</option>"; }).join("") +
-    "</select><div class='kapsam' id='map-cat-scope'></div></div></div>" +
-    '<div class="map-ticker" id="map-ticker"></div>' +
-    '<div class="map-flex" id="map-flex">' + mapMarkup() +
-    '<aside class="map-feed" id="map-feed" hidden>' +
-    '<div class="mf-head" id="mf-head"></div><div class="mf-list" id="mf-list"></div></aside></div>' +
-    '<div id="map-board"></div>' +
-    '<div class="note" id="map-note">' + esc(B.mapInfo) + "</div></div>";
+  /* Canlı etkileşim haritası: the standalone screen in harita/, framed so its
+     styles and timers stay out of the deck. A sales user opens on their own
+     city group, as the old map did. */
+  var u = currentUser(), mine = "";
+  if (u && (u.team === "SAS" || u.team === "MoS") && u.city) mine = mapGroupOfCity(u.city);
+  h += '<div class="panel cl-panel"><h2 class="cl-title">' + esc(B.mapTitle) +
+    '<span class="cl-dot"></span></h2><div class="cl-wrap" id="cl-wrap">' +
+    '<iframe id="cl-frame" title="' + esc(B.mapTitle) + '" src="harita/index.html?embed=1&v=20260921155656' +
+    (mine ? "&city=" + encodeURIComponent(mine) : "") + '"></iframe>' +
+    '<div class="cl-loading">Harita yükleniyor…</div></div></div>';
 
   el.innerHTML = h;
   function search() {
@@ -306,18 +302,6 @@ PAGES.baslar = function (el) {
   }
   $("#g-go").addEventListener("click", search);
   $("#g-q").addEventListener("keydown", function (e) { if (e.key === "Enter") search(); });
-  $("#map-city").addEventListener("change", mapRefresh);
-  $("#map-cat").addEventListener("change", mapRefresh);
-
-  /* a sales user starts zoomed into their own city when the login sheet
-     carries one (the "Şehir" column; optional, the map works without it) */
-  var u = currentUser();
-  if (u && (u.team === "SAS" || u.team === "MoS") && u.city) {
-    var mine = mapGroupOfCity(u.city);
-    if (mine) $("#map-city").value = mine;
-  }
-  mapRefresh();
-  loadMapSheet(mapRefresh);
 };
 
 function googleIcon() {
@@ -1201,6 +1185,90 @@ function mapMarkup() {
     '<div class="dist-pop" id="dist-pop" hidden></div></div>';
 }
 function stopMap() { if (mapTimer) { clearInterval(mapTimer); mapTimer = null; } }
+
+/* The framed map talks to the deck in three messages; only the current frame
+   is listened to.
+   cl-height: its content height — the frame takes exactly that, so the deck
+     keeps one scrollbar.
+   cl-modal: a dialog opened/closed inside it — the deck dims the rest of the
+     page and stops scrolling, so the dialog cannot slide away under the
+     header; a click on the dimmed page closes the dialog.
+   cl-key: P / Escape pressed inside it — the deck's own shortcuts, which a
+     focused frame would otherwise swallow. */
+window.addEventListener("message", function (e) {
+  var f = $("#cl-frame");
+  if (!f || e.source !== f.contentWindow || !e.data) return;
+  var m = e.data;
+  if (m.type === "cl-height") {
+    var h = Math.ceil(+m.h || 0);
+    if (h > 0) f.style.height = h + "px";
+    $("#cl-wrap").classList.add("ready");
+    clReflow();
+  } else if (m.type === "cl-modal") {
+    clModal(!!m.open);
+  } else if (m.type === "cl-key") {
+    if (m.key === "p" || m.key === "P") Pen.toggle();
+    if (m.key === "Escape") { Pen.toggle(false); goHome(); }
+  }
+});
+/* While a dialog is open in the map: the frame is lifted above a page-wide
+   shade (it dims itself with the dialog's own backdrop), clipped below the
+   fixed header so it never paints over it, and the rest of the deck is inert
+   so Tab cannot walk out of the dialog into controls behind the shade. */
+function clModal(on) {
+  var root = document.documentElement, shade = $("#cl-shade"), wrap = $("#cl-wrap");
+  if (on && !shade) {
+    /* the scrollbar goes while locked — pad for it so nothing shifts */
+    root.style.setProperty("--cl-sbw", (window.innerWidth - root.clientWidth) + "px");
+    shade = document.createElement("div");
+    shade.id = "cl-shade";
+    shade.className = "cl-shade";
+    shade.addEventListener("click", function () {
+      var f = $("#cl-frame");
+      if (f) f.contentWindow.postMessage({ type: "cl-close" }, "*");
+    });
+    document.body.appendChild(shade);
+  }
+  if (!on) {
+    if (shade) shade.remove();
+    root.style.removeProperty("--cl-sbw");
+    if (wrap) wrap.style.clipPath = "";
+  }
+  root.classList.toggle("cl-modal", on);
+  $$(".s-top, #s-sim-home, .s-draw-bar, #s-topic .s-topic-head, #s-topic-body > :not(.cl-panel)")
+    .forEach(function (el) { if (on) el.setAttribute("inert", ""); else el.removeAttribute("inert"); });
+  if (on) {
+    Pen.toggle(false);            /* its toolbar sits above everything */
+    clRoom();
+    clReflow();
+  }
+}
+/* Give the dialog room: when little of the frame shows (the page scrolled to
+   its very end, a short window), scroll so as much of it as fits is in view.
+   The lock stops the user scrolling, not the script. */
+function clRoom() {
+  var wrap = $("#cl-wrap"), bar = $(".s-top");
+  if (!wrap || !bar) return;
+  var r = wrap.getBoundingClientRect(), hb = bar.getBoundingClientRect().bottom, vh = window.innerHeight;
+  var shown = Math.min(r.bottom, vh) - Math.max(r.top, hb);
+  if (shown >= Math.min(r.height, vh - hb, 520)) return;
+  if (r.bottom < vh) window.scrollBy(0, r.bottom - vh);
+  else if (r.top > hb) window.scrollBy(0, r.top - hb);
+}
+/* The deck owns the geometry: it clips the lifted frame below the header and
+   tells the frame which slice of it is visible, whenever anything that moves
+   the frame changes — a resize, the frame's own new height, a scroll clamp. */
+function clReflow() {
+  var wrap = $("#cl-wrap"), bar = $(".s-top"), f = $("#cl-frame");
+  if (!wrap || !bar || !f || !document.documentElement.classList.contains("cl-modal")) return;
+  var r = f.getBoundingClientRect(), hb = bar.getBoundingClientRect().bottom;
+  var t = Math.max(0, hb - r.top);
+  wrap.style.clipPath = t ? "inset(" + Math.ceil(t) + "px 0 0 0)" : "";
+  f.contentWindow.postMessage({ type: "cl-place", a: t,
+    b: Math.min(r.height, window.innerHeight - r.top), h: r.height }, "*");
+}
+window.addEventListener("resize", clReflow);
+window.addEventListener("scroll", clReflow);
 
 /* everything that reacts to a filter change, in one place */
 /* The pulse layer (ticker + notification feed + leaderboard) is still in

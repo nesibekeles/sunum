@@ -35,7 +35,7 @@ window.SUNUM = {
     kicker: "19 yıldır sektörün lideri",
     googleTitle: "Düğün.com Google'da hep ilk sıralarda",
     googleNote: "Çiftin yazdığı her aramada karşısına çıkıyoruz. Deneyin.",
-    mapTitle: "Son 1 haftada neler oldu?",
+    mapTitle: "Canlı etkileşim haritası",
     mapInfo: "Bu haritada; Düğün.com üzerinden firmalara ulaşan veya " +
       "anlaşma sağlayan çiftlerin son 1 haftalık verilerini görmektesiniz."
   },
