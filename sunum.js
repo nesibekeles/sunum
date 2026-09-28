@@ -291,7 +291,7 @@ PAGES.baslar = function (el) {
   if (u && (u.team === "SAS" || u.team === "MoS") && u.city) mine = mapGroupOfCity(u.city);
   h += '<div class="panel cl-panel"><h2 class="cl-title">' + esc(B.mapTitle) +
     '<span class="cl-dot"></span></h2><div class="cl-wrap" id="cl-wrap">' +
-    '<iframe id="cl-frame" title="' + esc(B.mapTitle) + '" src="harita/index.html?embed=1&v=20260928195807' +
+    '<iframe id="cl-frame" title="' + esc(B.mapTitle) + '" src="harita/index.html?embed=1&v=20260928200311' +
     (mine ? "&city=" + encodeURIComponent(mine) : "") + '"></iframe>' +
     '<div class="cl-loading">Harita yükleniyor…</div></div></div>';
 
